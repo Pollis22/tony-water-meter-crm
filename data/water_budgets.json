@@ -1,0 +1,723 @@
+{
+  "Grosse Pointe Woods": {
+    "usd": 9679282,
+    "fiscalYear": "FY2025-2026",
+    "type": "water-and-sewer combined",
+    "source": "[City of Grosse Pointe Woods FY2025-2026 Proposed Budget](https://www.gpwmi.us/sites/default/files/fileattachments/finance/page/3970/fy_2025-2026_budget_website.pdf)",
+    "notes": "water-and-sewer enterprise fund operating expenditures"
+  },
+  "Oak Park": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Battle Creek": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Dearborn Heights": {
+    "usd": 72642408,
+    "fiscalYear": "FY2025-2026",
+    "type": "water-and-sewer combined",
+    "source": "[City of Dearborn Heights FY2025-2026 Approved Budget](https://dearbornheightsmi.gov/DocumentCenter/View/4821/FY-2025-2026-Approved-Budget)",
+    "notes": "water-and-sewer enterprise fund (Fund 592) total appropriations"
+  },
+  "Southgate": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Kentwood": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "St. Clair Shores": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Jackson": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Garden City": {
+    "usd": 10488300,
+    "fiscalYear": "FY2025",
+    "type": "water-and-sewer combined",
+    "source": "[City of Garden City FY24/25 General Appropriations Ordinance](https://www.gardencitymi.org/DocumentCenter/View/6856/A24-004-General-Appropriation-2024-25-Ordinance)",
+    "notes": "Water/Sewer Fund (Fund 592) total operating expenditures on cash basis."
+  },
+  "Trenton": {
+    "usd": 13611827,
+    "fiscalYear": "FY2025-2026",
+    "type": "water-and-sewer combined",
+    "source": "[City of Trenton, MI Council Adopted Budget FY 2025-2026](https://www.trentonmi.org/DocumentCenter/View/4565)",
+    "notes": "Fund 592 Water & Wastewater Fund total appropriations (operating budget) $13,611,827"
+  },
+  "Southfield": {
+    "usd": 54191243,
+    "fiscalYear": "FY2025",
+    "type": "water-and-sewer combined",
+    "source": "[City of Southfield 2024-2025 Budget Executive Summary](https://www.cityofsouthfield.com/sites/default/files/2024-07/2024-2025%20Municipal%20Budget%20Executive%20Summary.pdf), [City of Southfield 2024-2025 Budget Resolution](https://www.cityofsouthfield.com/sites/default/files/2024-07/2024-2025%20Budget%20Resolution.pdf)",
+    "notes": "Total balanced operating budget for water and sewer enterprise fund including capital projects."
+  },
+  "Eastpointe": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Melvindale": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Portage": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[Budgets and Financial Documents | Portage, MI](https://www.portagemi.gov/638/Budgets-Financial-Documents), [Archive Center \u2022 Portage, MI](https://www.portagemi.gov/Archive.aspx), [Finance | Portage, MI](https://www.portagemi.gov/182/Finance)",
+    "notes": null
+  },
+  "Riverview": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Ypsilanti": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Wyoming": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Sturgis": {
+    "usd": 2150218,
+    "fiscalYear": "FY2025",
+    "type": "water-only operating",
+    "source": "[City of Sturgis FY2024-2025 Operating Budget](https://www.sturgismi.gov/DocumentCenter/View/115/Current-Operating-Budget-PDF)",
+    "notes": "Water Fund total operating expenditures budget for FY2025"
+  },
+  "Novi": {
+    "usd": 33735831,
+    "fiscalYear": "FY2026",
+    "type": "water-and-sewer combined",
+    "source": "[City of Novi FY2025-26 Budget Adoption Resolution](https://www.cityofnovi.org/media/aoln1wv3/250505matter1.pdf)",
+    "notes": "water-and-sewer enterprise fund total appropriations including capital outlay"
+  },
+  "Wayne": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[City of Wayne FY2025-26 Budget Overview](https://www.cityofwayne.com/DocumentCenter/View/1274/Presentation-FY-2026-Budget-Overview), [City of Wayne FY2025 Audit Report](https://www.cityofwayne.com/DocumentCenter/View/1380/2025-Audit-Report-PDF)",
+    "notes": null
+  },
+  "Hamtramck": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Canton": {
+    "usd": 16900000,
+    "fiscalYear": "FY2026",
+    "type": "water-and-sewer combined",
+    "source": "[Citizen Portal FY2026 Budget Proposal](https://citizenportal.ai/articles/7075041/canton-council-hears-fy2026-budget-proposal-that-trims-millage-rate-and-funds-42-million-in-capital-projects)",
+    "notes": "Proposed water and sewer fund operating budget $16.9 million (total fund $36.4 million with $19.4 million capital); adoption planned Aug 2025."
+  },
+  "Lincoln Park": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Hazel Park": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "River Rouge": {
+    "usd": 4896358,
+    "fiscalYear": "FY2025-2026",
+    "type": "water-and-sewer combined",
+    "source": "[City of River Rouge Proposed Budget 2025-2026](https://cityofriverrouge.com/wp-content/uploads/2025/06/City-of-River-Rouge-Proposed-Budget-2025.2026.pdf)",
+    "notes": "Combined water-and-sewer enterprise fund operating appropriations excluding depreciation; includes cost of water/sewage, operations/maintenance, and debt service."
+  },
+  "Allen Park": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Westland": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[City of Westland Budget Archive](https://www.cityofwestland.com/Archive.aspx?AMID=36), [City of Westland Financial Audits](https://www.cityofwestland.com/Archive.aspx?AMID=37), [Michigan Local Units Budget](https://michigan-localunits.budget.socrata.com)",
+    "notes": "No specific annual operating budget figure for water department or water-and-sewer fund found in public documents; only actual operating expenses in CAFRs (~$32-34M) and capital plans."
+  },
+  "Niles": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[City of Niles FY2024 Audit](https://static1.squarespace.com/static/6775add687259625336e0d97/t/67e5585699481f421225c80f/1743083607952/CityofNiles-A-Final-Audit022525.pdf)",
+    "notes": "No adopted operating budget figure found in public documents; Water Fund actual operating expenses were 2813727 for FY ended Sept 30 2024 (water-only operating)."
+  },
+  "Gibraltar": {
+    "usd": 2612204,
+    "fiscalYear": "FY2025-2026",
+    "type": "water-and-sewer combined",
+    "source": "[City of Gibraltar FY2025-2026 Budget](https://cityofgibraltarmi.gov/wp-content/uploads/2025/05/FY-Budget-2025-2026.pdf)",
+    "notes": "Fund 592 water accounts operating budget balanced at $2,612,204 total revenues/expenditures"
+  },
+  "Livonia": {
+    "usd": 44645523,
+    "fiscalYear": "FY2024",
+    "type": "water-and-sewer combined",
+    "source": "[City of Livonia Council Minutes Oct 16 2023](https://docs.ci.livonia.mi.us/WebLink/DocView.aspx?id=298238&amp;dbid=0&amp;repo=LIVONIA)",
+    "notes": "Adopted operating expenditures for Water and Sewer enterprise fund 592 for fiscal year ending November 30, 2024."
+  },
+  "Flat Rock": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "South Haven": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Romulus": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[unknown](unknown)",
+    "notes": null
+  },
+  "Adrian": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Saline": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Tecumseh": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": "No public budget figure found after extensive searches of web, official sites (mytecumseh.org), council agendas, CAFRs; recent public hearing noted but no documents located."
+  },
+  "Northville": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Farmington": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Dexter": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "East Grand Rapids": {
+    "usd": 6211060,
+    "fiscalYear": "FY2024-2025",
+    "type": "water-and-sewer combined",
+    "source": "[East Grand Rapids MI FY2024-2025 Budget Adoption Resolution](https://www.eastgrmi.gov/AgendaCenter/ViewFile/Agenda/822)",
+    "notes": "Combined water-and-sewer enterprise fund total expenditures; covers operations, maintenance, capital improvements, billing, and administration."
+  },
+  "Mason": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Grosse Pointe Farms": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Grosse Pointe Park": {
+    "usd": 2739200,
+    "fiscalYear": "FY2025",
+    "type": "water-only operating",
+    "source": "[Water and Sewer Rate Study Report](https://www.grossepointepark.org/DocumentCenter/View/950/6-Year-Rate-Study-Report)",
+    "notes": "City-provided budgeted O&M expenses for Water Department (Dept 535 + allocable admin) FYE 6/30/2025 from official 2025 rate study document."
+  },
+  "Woodhaven": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Hillsdale": {
+    "usd": 2410329,
+    "fiscalYear": "FY2024-2025",
+    "type": "water-only operating",
+    "source": "[Hillsdale BPU Board Packet September 10, 2024](https://www.cityofhillsdale.org/sites/default/files/fileattachments/board_of_public_utilities_bpu/meeting/packets/14577/hillsdale_bpu_board_packet_-_september_10_2024.pdf), [City of Hillsdale Adopted Budget 2024-2025](https://www.cityofhillsdale.org/sites/default/files/fileattachments/finance/page/14917/adopted_budget_fy2025.pdf)",
+    "notes": "Water fund operating expenditures budget from BPU FY2024-25 amended budget."
+  },
+  "Ferndale": {
+    "usd": 17741384,
+    "fiscalYear": "FYE 2025",
+    "type": "water-and-sewer combined",
+    "source": "[City of Ferndale FYE2025-2027 Budget Book](https://ferndalemi.gov/PDFs/Final%20Budget%20Book%20FYE25%20(1).pdf)",
+    "notes": "Combined water-and-sewer enterprise fund (Fund 592) total appropriations; operating ~11486955 excluding capital and debt"
+  },
+  "Grandville": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "South Lyon": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Allegan": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Springfield": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Detroit": {
+    "usd": 139989900,
+    "fiscalYear": "FY2025",
+    "type": "water-only operating",
+    "source": "[City of Detroit DWSD FY2025 Budget Analysis](https://detroitmi.gov/sites/detroitmi.localhost/files/2024-03/DWSD%20FY%202025%20budget%20daily.pdf), [DWSD Legistar FY24-25 Approval](https://dwsd.legistar.com/LegislationDetail.aspx?ID=6583792&amp;GUID=E5DFA17E-DA0E-4CC9-8100-B82D0C9F244E&amp;Options=&amp;Search=), [City of Detroit FY2025 Adopted Budget Section C](https://detroitmi.gov/sites/detroitmi.localhost/files/2024-04/FY%202025%20Adopted%20Budget%20-%20Section%20C%20-%20Web%20Version.pdf)",
+    "notes": "DWSD Water Operating Fund 5720 revenue requirement as proposed to and approved by BOWC; matches total expenditures in adopted city budget (departmental $102.98M + non-departmental $36.99M)."
+  },
+  "Buchanan": {
+    "usd": 2669287,
+    "fiscalYear": "FY2024-2025",
+    "type": "water-and-sewer combined",
+    "source": "[City of Buchanan Resolution 2024.05/15 Adopting FY2024-2025 Budget](https://mccmeetingspublic.blob.core.usgovcloudapi.net/buchananmi-meet-341deafd65eb42ed95fdb8a8554618d6/ITEM-Attachment-001-7c29407de38f446ea423c480f981cd62.pdf)",
+    "notes": "Water & Sewer Enterprise fund total budget (likely includes operating and capital)\""
+  },
+  "Hastings": {
+    "usd": 5067941,
+    "fiscalYear": "FY2025",
+    "type": "water-and-sewer combined",
+    "source": "[City of Hastings Council Packet May 13 2024](https://www.hastingsmi.gov/wp-content/uploads/Council-Packet-05-13-2024.pdf)",
+    "notes": "Adopted budget for combined water-and-sewer fund total expenditures including capital outlay"
+  },
+  "Ecorse": {
+    "usd": 8957988,
+    "fiscalYear": "FY2022-2023",
+    "type": "water-and-sewer combined",
+    "source": "[Ecorse FY2022-2023 Recommended Budget](https://secure.munetrix.com/n/Michigan/Municipalities/01-SEMCOG/Wayne-County/City/Ecorse/Municipalities/Doc_download/7405)",
+    "notes": "Combined water and sewer fund operating budget (revenues equal expenditures, no capital budgeted)"
+  },
+  "Hudsonville": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "St. Joseph": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[City of St. Joseph Annual Budget Page](https://www.sjcity.com/finance/page/annual-city-budget-and-capital-improvement-plan)",
+    "notes": null
+  },
+  "Belleville": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Eaton Rapids": {
+    "usd": 877387,
+    "fiscalYear": "FY2024-2025",
+    "type": "water-only operating",
+    "source": "[City of Eaton Rapids Draft Budget Presentation FY2024-2025](https://www.cityofeatonrapids.gov/wp-content/uploads/2024/05/DRAFT-Budget-Presentation-2024-2025-3.pdf)",
+    "notes": "Water enterprise fund (591) total operating expenditures; separate from sewer and capital outlay of 8333"
+  },
+  "Center Line": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Luna Pier": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[City of Luna Pier Proposed Budget 2024-2025](https://www.cityoflunapier.com/wp-content/uploads/2024/01/Proposed-Budget-2024-2025.pdf), [City of Luna Pier FY2025 CAFR](https://www.cityoflunapier.com/wp-content/uploads/2025/12/5820102025Audit-Luna-Pier.pdf)",
+    "notes": "No separate water utility operating budget found; only wastewater/sewer enterprise fund with actual operating expenses of 484971 reported in FY2025 audit (ended June 30, 2025)"
+  },
+  "Brighton": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Dowagiac": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Taylor": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[City of Taylor Current Budgets](https://cityoftaylor.com/1192/Current-City-Budget-and-Amendments), [FY2026/27 Water Supply Fund](https://cityoftaylor.com/DocumentCenter/View/23090/Fiscal-Year-2026-2027-Mayor-Proposed-Budget), [FY2025/26 Adopted](http://www.taylorfestival.com/DocumentCenter/View/12792/Fiscal-Year-2025-2026-Council-Adopted-Budget)",
+    "notes": "Separate water supply system enterprise fund; total appropriations include capital outlay (e.g. $1.175M in FY27 proposed for total 13M); no isolated water-only operating figure found in proposed/adopted budgets"
+  },
+  "Albion": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Harper Woods": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Potterville": {
+    "usd": 640560,
+    "fiscalYear": "FY2025-26",
+    "type": "water-only operating",
+    "source": "[City of Potterville FY2024-25 Amended and FY2025-26 Adopted Budget](https://pottervillemi.org/wp-content/uploads/2025/06/2024-25-AND-26-BUDGET-ADOPTED-20250619.pdf)",
+    "notes": "Water Fund 591 total appropriations (Fund 591-537 Admin + 591-556 DPW + 591-906 Debt Service)"
+  },
+  "Plainwell": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Wayland": {
+    "usd": 1161069,
+    "fiscalYear": "2025-2026",
+    "type": "water-only operating",
+    "source": "[City of Wayland 2025-2026 Approved Budget](https://www.cityofwayland.org/wp-content/uploads/2025/05/Budget-2025-2026.pdf)",
+    "notes": "Water fund (Fund 591) operation & maintenance subtotal."
+  },
+  "Litchfield": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Hudson": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Grosse Pointe": {
+    "usd": 6700000,
+    "fiscalYear": "FY2025",
+    "type": "water-and-sewer combined",
+    "source": "[Grosse Pointe Park Proposed FY2025 Budget](https://www.grossepointepark.org/DocumentCenter/View/131), [Grosse Pointe Park Water and Sewer Rate Study](https://www.grossepointepark.org/DocumentCenter/View/950/6-Year-Rate-Study-Report)",
+    "notes": "Combined water-and-sewer enterprise fund operating budget; water O&M budgeted at $2,739,200"
+  },
+  "Hartford": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Plymouth": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[unknown](unknown)",
+    "notes": null
+  },
+  "Leslie": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Village of Grosse Pointe Shores": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "New Buffalo": {
+    "usd": 1692334,
+    "fiscalYear": "FY2024-2025",
+    "type": "water-only operating",
+    "source": "[City of New Buffalo FY 2024-2025 Proposed Budget](https://storage.googleapis.com/proudcity/newbuffalomi/2024/04/FY-2025-Proposed-Budget_Final.pdf)",
+    "notes": "Water Department enterprise fund proposed expenditures"
+  },
+  "Marshall": {
+    "usd": 2038438,
+    "fiscalYear": "FY2024",
+    "type": "water-only operating",
+    "source": "[City of Marshall FY2024 CAFR](https://www.cityofmarshall.com/DocumentCenter/View/1672/Fiscal-Year-2024-Comprehensive-Annual-Financial-Audit)",
+    "notes": "Actual operating expenses for Water Fund year ended June 30, 2024 from proprietary fund statements; no adopted operating budget found in accessible documents"
+  },
+  "Rockwood": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Three Rivers": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Pleasant Ridge": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Bronson": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Benton Harbor": {
+    "usd": 5247846,
+    "fiscalYear": "FY2026",
+    "type": "water-and-sewer combined",
+    "source": "[City of Benton Harbor FY2025-2026 Budget Ordinance](https://www.bhcity.us/docview.aspx?docid=53974)",
+    "notes": "Utility Operations fund expenditures (likely water/sewer/rubbish enterprise operating budget)"
+  },
+  "Galesburg": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Milan": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Fennville": {
+    "usd": 1165410,
+    "fiscalYear": "FY2025",
+    "type": "water-and-sewer combined",
+    "source": "[City of Fennville Budget Fiscal Year 2025](https://ecode360.com/FE6693/document/753058532.pdf)",
+    "notes": "Water and Sewer enterprise fund total expenditures (includes capital and debt)"
+  },
+  "Bangor": {
+    "usd": 570100,
+    "fiscalYear": "2025-2026",
+    "type": "water-only operating",
+    "source": "[City of Bangor, MI FY2025-2026 Budget Final Draft](https://www.cityofbangormi.org/wp-content/uploads/2025-2026-Budget.Final-Draft.pdf)",
+    "notes": "Proposed water fund expenses include operating costs and some capital items like equipment and improvements"
+  },
+  "Parchment": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Highland Park": {
+    "usd": 10515574,
+    "fiscalYear": "FY2024-25",
+    "type": "water-and-sewer combined",
+    "source": "[City of Highland Park Adopted FY 24-25 Budget](https://www.highlandparkmi.gov/media/qpvbofkf/adopted-fy-24-25-budget.pdf)",
+    "notes": "water-and-sewer enterprise fund total appropriations (operating budget)"
+  },
+  "Douglas": {
+    "usd": 563000,
+    "fiscalYear": "FY2024-2025",
+    "type": "water-and-sewer combined",
+    "source": "[City of the Village of Douglas FY2024-2025 Budget](https://www.douglasmi.gov/1301/Budget-2024-Through-2025-PDF)",
+    "notes": "Water/Sewer Revolving Fund total expenditures (primarily capital for repairs and improvements; day-to-day operations by Kalamazoo Lake Sewer & Water Authority)"
+  },
+  "Charlotte": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Saugatuck": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[City of Saugatuck website budgets](https://www.saugatuckcity.com/treasurer.html), [FY2025-2026 Recommended Budget](https://www.saugatuckcity.com/uploads/1/3/3/9/133977444/website_budget_packet__home_page.pdf), [FY2024-2025 Budget Report](https://www.saugatuckcity.com/uploads/1/3/3/9/133977444/budget_2024-2025.pdf)",
+    "notes": "No separate water operating budget published; Fund 592 water-and-sewer shows primarily capital/infrastructure figures around 270k revenues but no clear operating expenses like salaries/utilities."
+  },
+  "Morenci": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Grand Ledge": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": "[unknown](unknown)",
+    "notes": null
+  },
+  "Farmington Hills": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Reading": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Bridgman": {
+    "usd": 509104,
+    "fiscalYear": "FY2024",
+    "type": "water-only operating",
+    "source": "[City of Bridgman FY2024 Audit](https://www.bridgman.org/DocumentCenter/View/2646/FY-2024-Audit)",
+    "notes": "Total expenses for water enterprise fund; operating expenses $471834 excluding depreciation $99783 and interest $37270."
+  },
+  "Jonesville": {
+    "usd": 932061,
+    "fiscalYear": "FY2025-2026",
+    "type": "water-only operating",
+    "source": "[Jonesville MI Council Packet June 18 2025](https://jonesvillemi.gov/wp-content/uploads/2025/12/Council-Packet-06-18-25.pdf)",
+    "notes": "Water fund total expenditures: Iron Removal Plant and Water Distribution System."
+  },
+  "Olivet": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Coloma": {
+    "usd": 190807,
+    "fiscalYear": "2026-2027",
+    "type": "water-only operating",
+    "source": "[Coloma Charter Township March 31, 2026 Special Meeting Agenda](https://www.colomatownship.org/media/1246)",
+    "notes": "Water fund operating expenditures from approved budget"
+  },
+  "Kalamazoo": {
+    "usd": null,
+    "fiscalYear": null,
+    "type": null,
+    "source": null,
+    "notes": null
+  },
+  "Ann Arbor": {
+    "usd": 30763421,
+    "fiscalYear": "FY2025",
+    "type": "water-only operating",
+    "source": "[City of Ann Arbor Adopted FY2025 Budget](https://www.a2gov.org/media/swaherth/budget-book-fy25.pdf)",
+    "notes": "Water Supply System enterprise fund total expenditures"
+  },
+  "Dearborn": {
+    "usd": 26202608,
+    "fiscalYear": "FY2025",
+    "type": "water-only operating",
+    "source": "[City of Dearborn FY2025 Adopted Budget Book](https://dearborn.gov/sites/default/files/2024-08/FY2025%20Budget%20Book%20FINAL.pdf)",
+    "notes": "Water Fund expenditures $26,202,608; separate from Sewer Fund."
+  },
+  "Otsego": {
+    "usd": 922700,
+    "fiscalYear": "FY2025",
+    "type": "water-only operating",
+    "source": "[City of Otsego FY2025 Budget](https://www.cityofotsego.org/wp-content/uploads/2024/05/2024-25-Budget-Document.pdf)",
+    "notes": "Water fund operating appropriations (mains, pumping, admin, depreciation); excludes $607,780 capital outlay."
+  }
+}

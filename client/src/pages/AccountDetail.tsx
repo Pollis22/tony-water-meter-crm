@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { fmtNum, tierColor, priorityColor, statusColor, scoreColor, STATUSES, PRIORITIES } from '@/lib/format';
-import { ArrowLeft, Mail, Phone, MapPin, Building2, Sparkles, Plus, Trash2, Check } from 'lucide-react';
+import { fmtNum, tierColor, priorityColor, statusColor, scoreColor, STATUSES, PRIORITIES, TIERS } from '@/lib/format';
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Sparkles, Plus, Trash2, Check, DollarSign, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AccountDetail() {
@@ -64,6 +64,14 @@ export default function AccountDetail() {
 
   const reasons: string[] = (() => { try { return JSON.parse(account.scoreReasons || '[]'); } catch { return []; } })();
 
+  // Parse markdown link [text](url) from source
+  const sourceMatch = account.waterBudgetSource?.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+  const fmtBudgetFull = (usd: number | null | undefined) => usd == null
+    ? null
+    : usd >= 1_000_000
+      ? `$${(usd / 1_000_000).toFixed(2)}M ($${usd.toLocaleString()})`
+      : `$${usd.toLocaleString()}`;
+
   return (
     <div className="p-6 max-w-[1400px] mx-auto">
       <Link href="/accounts">
@@ -77,7 +85,6 @@ export default function AccountDetail() {
         <div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl font-semibold" data-testid="text-account-name">{account.name}</h1>
-            <Badge className={tierColor[account.tier]}>{account.tier}</Badge>
             <Badge variant="outline" className={priorityColor[account.priority]}>{account.priority} Priority</Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
@@ -97,7 +104,14 @@ export default function AccountDetail() {
       </div>
 
       {/* Quick fields */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+        <Card><CardContent className="p-3">
+          <div className="text-xs text-muted-foreground mb-1">Tier</div>
+          <Select value={account.tier} onValueChange={(v) => updateMut.mutate({ tier: v })}>
+            <SelectTrigger data-testid="select-tier"><SelectValue /></SelectTrigger>
+            <SelectContent>{TIERS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+          </Select>
+        </CardContent></Card>
         <Card><CardContent className="p-3">
           <div className="text-xs text-muted-foreground mb-1">Status</div>
           <Select value={account.status} onValueChange={(v) => updateMut.mutate({ status: v })}>
@@ -129,23 +143,57 @@ export default function AccountDetail() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Sparkles className="w-4 h-4 text-blue-600" /> Sales Insight</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-sm leading-relaxed">{account.insight || 'No insight available.'}</p>
-              {account.entryAngle && (
-                <div className="mt-4 pt-4 border-t">
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Entry Angle</div>
-                  <div className="text-sm font-medium">{account.entryAngle}</div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Sparkles className="w-4 h-4 text-blue-600" /> Sales Insight</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm leading-relaxed">{account.insight || 'No insight available.'}</p>
+                {account.entryAngle && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Entry Angle</div>
+                    <div className="text-sm font-medium">{account.entryAngle}</div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><DollarSign className="w-4 h-4 text-emerald-600" /> Public Water Budget</CardTitle></CardHeader>
+              <CardContent>
+                {account.waterBudgetUsd ? (
+                  <>
+                    <div className="text-xl font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums" data-testid="text-water-budget">
+                      {fmtBudgetFull(account.waterBudgetUsd)}
+                    </div>
+                    {account.waterBudgetFiscalYear && (
+                      <div className="text-xs text-muted-foreground mt-1">Fiscal year {account.waterBudgetFiscalYear}</div>
+                    )}
+                    {account.waterBudgetType && (
+                      <Badge variant="outline" className="mt-2 text-[10px]">{account.waterBudgetType}</Badge>
+                    )}
+                    {account.waterBudgetNotes && (
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{account.waterBudgetNotes}</p>
+                    )}
+                    {sourceMatch && (
+                      <a href={sourceMatch[2]} target="_blank" rel="noopener noreferrer"
+                         className="mt-3 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline" data-testid="link-budget-source">
+                        <ExternalLink className="w-3 h-3" /> {sourceMatch[1]}
+                      </a>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-sm text-muted-foreground" data-testid="text-water-budget">
+                    Unknown — no public figure found in research.
+                    <p className="mt-2 text-xs">Ask during discovery: water dept annual operating budget, capital plan, and meter replacement line item.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader className="pb-3"><CardTitle className="text-base">Primary Contact</CardTitle></CardHeader>
-              <CardContent className="text-sm space-y-1">
+              <CardContent className="text-sm space-y-1" data-testid="card-primary-contact">
                 <div className="font-medium">{account.primaryContact || 'Unknown'}</div>
                 {account.contactTitle && <div className="text-muted-foreground">{account.contactTitle}</div>}
                 {account.phone && <div className="flex items-center gap-2"><Phone className="w-3 h-3" /> <a href={`tel:${account.phone}`} className="hover:underline">{account.phone}</a></div>}

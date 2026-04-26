@@ -49,6 +49,11 @@ CREATE TABLE IF NOT EXISTS accounts (
   next_follow_up_at TEXT,
   notes TEXT,
   tags TEXT,
+  water_budget_usd INTEGER,
+  water_budget_fiscal_year TEXT,
+  water_budget_type TEXT,
+  water_budget_source TEXT,
+  water_budget_notes TEXT,
   lat REAL,
   lng REAL,
   geo_source TEXT,
@@ -115,6 +120,21 @@ CREATE TABLE IF NOT EXISTS routes (
 );
 `);
 
+// Idempotent migrations for already-seeded databases (adds columns if missing)
+function safeAddColumn(table: string, col: string, type: string) {
+  try {
+    sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`);
+  } catch (e: any) {
+    // Column already exists — safe to ignore
+    if (!String(e.message || e).includes('duplicate column')) throw e;
+  }
+}
+safeAddColumn('accounts', 'water_budget_usd', 'INTEGER');
+safeAddColumn('accounts', 'water_budget_fiscal_year', 'TEXT');
+safeAddColumn('accounts', 'water_budget_type', 'TEXT');
+safeAddColumn('accounts', 'water_budget_source', 'TEXT');
+safeAddColumn('accounts', 'water_budget_notes', 'TEXT');
+
 export const db = drizzle(sqlite);
 
 // ---------- Seed if empty ----------
@@ -162,6 +182,38 @@ function maybeSeed() {
 }
 maybeSeed();
 
+// ---------- Apply public-budget research (idempotent; only fills empty cells) ----------
+function applyBudgets() {
+  const candidates = [
+    path.resolve(process.cwd(), 'data/water_budgets.json'),
+    path.resolve(process.cwd(), '../data/water_budgets.json'),
+  ];
+  let p: string | null = null;
+  for (const c of candidates) if (fs.existsSync(c)) { p = c; break; }
+  if (!p) return;
+  const data = JSON.parse(fs.readFileSync(p, 'utf8')) as Record<string, {
+    usd: number | null; fiscalYear: string | null; type: string | null;
+    source: string | null; notes: string | null;
+  }>;
+  const update = sqlite.prepare(`UPDATE accounts SET
+    water_budget_usd = COALESCE(water_budget_usd, ?),
+    water_budget_fiscal_year = COALESCE(water_budget_fiscal_year, ?),
+    water_budget_type = COALESCE(water_budget_type, ?),
+    water_budget_source = COALESCE(water_budget_source, ?),
+    water_budget_notes = COALESCE(water_budget_notes, ?)
+    WHERE name = ? AND water_budget_source IS NULL`);
+  let applied = 0;
+  const txn = sqlite.transaction(() => {
+    for (const [name, b] of Object.entries(data)) {
+      const r = update.run(b.usd, b.fiscalYear, b.type, b.source, b.notes, name);
+      if (r.changes) applied += r.changes;
+    }
+  });
+  txn();
+  if (applied > 0) console.log(`[budgets] Applied research to ${applied} account(s)`);
+}
+applyBudgets();
+
 // ---------- Storage ----------
 export const storage = {
   // Accounts
@@ -179,6 +231,12 @@ export const storage = {
     return this.getAccount(id);
   },
   deleteAccount(id: number) {
+    // Cascade delete: contacts, tasks, notes, activities, opportunities tied to this account
+    db.delete(contacts).where(eq(contacts.accountId, id)).run();
+    db.delete(tasks).where(eq(tasks.accountId, id)).run();
+    db.delete(notes).where(eq(notes.accountId, id)).run();
+    db.delete(activities).where(eq(activities.accountId, id)).run();
+    db.delete(opportunities).where(eq(opportunities.accountId, id)).run();
     db.delete(accounts).where(eq(accounts.id, id)).run();
   },
 

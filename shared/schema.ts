@@ -35,6 +35,12 @@ export const accounts = sqliteTable("accounts", {
   nextFollowUpAt: text("next_follow_up_at"),
   notes: text("notes"),
   tags: text("tags"), // JSON array
+  // Public budget research
+  waterBudgetUsd: integer("water_budget_usd"), // annual water/utility budget in USD; null = unknown
+  waterBudgetFiscalYear: text("water_budget_fiscal_year"),
+  waterBudgetType: text("water_budget_type"), // 'water-only operating' | 'water-and-sewer combined' | 'DPW total' | 'water capital' | null
+  waterBudgetSource: text("water_budget_source"), // markdown link
+  waterBudgetNotes: text("water_budget_notes"),
   // Geo
   lat: real("lat"),
   lng: real("lng"),
