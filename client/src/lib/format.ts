@@ -30,9 +30,12 @@ export const statusColor: Record<string, string> = {
   Won: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200',
   Lost: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200',
   Nurture: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200',
+  Prospect: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-200',
+  Customer: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
+  Dead: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400',
 };
 
-export const STATUSES = ['Not Started', 'Researching', 'Contacted', 'Meeting Set', 'Proposal Sent', 'Won', 'Lost', 'Nurture'] as const;
+export const STATUSES = ['Not Started', 'Researching', 'Contacted', 'Meeting Set', 'Proposal Sent', 'Won', 'Lost', 'Nurture', 'Prospect', 'Customer', 'Dead'] as const;
 export const PRIORITIES = ['High', 'Medium', 'Low'] as const;
 export const TIERS = ['Tier 1', 'Tier 2', 'Tier 3'] as const;
 
