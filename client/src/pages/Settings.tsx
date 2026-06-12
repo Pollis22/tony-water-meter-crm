@@ -1,7 +1,102 @@
+import { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Droplets, DatabaseBackup, FileSpreadsheet } from 'lucide-react';
+import { Droplets, DatabaseBackup, FileSpreadsheet, UploadCloud, AlertTriangle } from 'lucide-react';
+
+
+function RestoreBlock() {
+  const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [phase, setPhase] = useState<'idle' | 'restoring' | 'waiting'>('idle');
+
+  const pollUntilBack = () => {
+    setPhase('waiting');
+    const started = Date.now();
+    const tick = async () => {
+      try {
+        const r = await fetch('/api/accounts', { cache: 'no-store' });
+        if (r.ok) { window.location.reload(); return; }
+      } catch { /* server restarting */ }
+      if (Date.now() - started < 90_000) setTimeout(tick, 2000);
+      else {
+        setPhase('idle');
+        toast({ title: 'Still restarting…', description: 'Give it a few more seconds, then reload the page yourself.', variant: 'destructive' });
+      }
+    };
+    setTimeout(tick, 2500);
+  };
+
+  const restore = async () => {
+    if (!file) return;
+    setPhase('restoring');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/backup/restore', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setPhase('idle');
+        toast({ title: 'Restore rejected', description: body?.error ?? 'The file was not accepted. The database was not changed.', variant: 'destructive' });
+        return;
+      }
+      // Server swaps the file and restarts itself; wait for it to come back.
+      pollUntilBack();
+    } catch {
+      // Network drop here usually means the restart already began.
+      pollUntilBack();
+    }
+  };
+
+  return (
+    <div className="border-t pt-3 mt-1 space-y-2">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <UploadCloud className="w-4 h-4 text-blue-600" /> Restore from backup
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Load a previously downloaded <code>.db</code> file. This <span className="font-medium text-foreground">replaces everything currently in the app</span> with the backup's contents (the server keeps the replaced database as a safety copy). The app restarts itself — the page reloads automatically when it's back, usually within ~15 seconds.
+      </p>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".db"
+        className="hidden"
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        data-testid="input-restore-file"
+      />
+      {phase === 'idle' && !file && (
+        <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()} data-testid="button-pick-restore">
+          Choose backup file…
+        </Button>
+      )}
+      {phase === 'idle' && file && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-3 space-y-2">
+          <div className="flex items-start gap-2 text-xs">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <span>
+              Restore <span className="font-medium">{file.name}</span>? All current accounts, contacts, activity, tasks, notes, and opportunities will be replaced by what's in this backup.
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="destructive" onClick={restore} data-testid="button-confirm-restore">
+              Restore now
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => { setFile(null); if (inputRef.current) inputRef.current.value = ''; }}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+      {phase !== 'idle' && (
+        <div className="text-xs text-muted-foreground animate-pulse" data-testid="text-restore-status">
+          {phase === 'restoring' ? 'Uploading and validating backup…' : 'Database restored — app is restarting, this page will reload itself…'}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Settings() {
   return (
@@ -65,6 +160,7 @@ export default function Settings() {
             <p className="text-xs text-muted-foreground">
               The .db file is a live snapshot of the full database (restorable as-is). The spreadsheet has one tab per table — accounts, contacts, activities, tasks, notes, opportunities, routes.
             </p>
+            <RestoreBlock />
           </CardContent>
         </Card>
 

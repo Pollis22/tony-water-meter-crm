@@ -313,6 +313,45 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Restore: upload a .db backup and swap it in. The process intentionally
+  // restarts afterwards so better-sqlite3 reopens the restored file; Railway's
+  // restart policy brings the service back in seconds.
+  const restoreUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024, files: 1 },
+  });
+  app.post("/api/backup/restore", (req: Request, res: Response, next: NextFunction) => {
+    restoreUpload.single("file")(req, res, (err: any) => {
+      if (err) {
+        const msg = err.code === "LIMIT_FILE_SIZE" ? "Backup file must be 50 MB or smaller." : "Could not read the uploaded file.";
+        return res.status(400).json({ error: msg });
+      }
+      next();
+    });
+  }, (req, res) => {
+    const f = (req as any).file as Express.Multer.File | undefined;
+    if (!f) return res.status(400).json({ error: "No backup file uploaded." });
+    const tmp = nodePath.join(os.tmpdir(), `tony-crm-restore-${Date.now()}.db`);
+    try {
+      nodeFs.writeFileSync(tmp, f.buffer);
+      const info = storage.restoreDatabase(tmp);
+      nodeFs.unlink(tmp, () => {});
+      res.json({ ok: true, accounts: info.accounts, restarting: true });
+      // Give the response time to flush, then exit so the platform restarts us
+      // and better-sqlite3 reopens the restored database file.
+      setTimeout(() => {
+        console.log("[restore] database replaced — restarting to load it");
+        process.exit(1);
+      }, 500);
+    } catch (e: any) {
+      nodeFs.unlink(tmp, () => {});
+      console.error("[restore]", e);
+      // If the live connection was already closed mid-swap, the process is in a
+      // bad state regardless; the error path before close() is the common one.
+      res.status(400).json({ error: String(e?.message ?? "Restore failed — the database was not changed.") });
+    }
+  });
+
   // ---------- Tasks ----------
   app.get("/api/tasks", (req, res) => {
     const accountId = req.query.accountId ? Number(req.query.accountId) : undefined;

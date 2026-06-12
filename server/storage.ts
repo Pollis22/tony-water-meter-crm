@@ -397,6 +397,37 @@ export const storage = {
   async backupDatabase(dest: string): Promise<void> {
     await sqlite.backup(dest);
   },
+  /**
+   * Replaces the live database with an uploaded backup. Validates the file
+   * first (expected tables + integrity check), keeps the current database as
+   * `<db>.pre-restore.bak`, then swaps files. The caller MUST restart the
+   * process afterwards — the live connection is closed by this call.
+   */
+  restoreDatabase(srcPath: string): { accounts: number } {
+    const incoming = new Database(srcPath, { readonly: true, fileMustExist: true });
+    let count: number;
+    try {
+      const tables = (incoming.prepare("select name from sqlite_master where type='table'").all() as { name: string }[])
+        .map((r) => r.name);
+      for (const t of ["accounts", "contacts", "activities", "tasks", "notes", "opportunities", "routes"]) {
+        if (!tables.includes(t)) throw new Error(`That file isn't a Territory CRM backup (missing "${t}" table).`);
+      }
+      const check = incoming.prepare("pragma quick_check").get() as { quick_check?: string } | undefined;
+      if (check?.quick_check !== "ok") throw new Error("Backup file failed the integrity check.");
+      count = (incoming.prepare("select count(*) as c from accounts").get() as { c: number }).c;
+    } finally {
+      incoming.close();
+    }
+    // Swap: close the live handle, keep a safety copy, drop stale WAL/SHM, copy in.
+    sqlite.close();
+    const abs = path.resolve(dbPath);
+    try { if (fs.existsSync(abs)) fs.copyFileSync(abs, abs + ".pre-restore.bak"); } catch { /* best effort */ }
+    for (const suffix of ["-wal", "-shm"]) {
+      try { fs.rmSync(abs + suffix, { force: true }); } catch { /* best effort */ }
+    }
+    fs.copyFileSync(srcPath, abs);
+    return { accounts: count };
+  },
 
   listRoutes(): Route[] {
     return db.select().from(routes).orderBy(desc(routes.createdAt)).all();
