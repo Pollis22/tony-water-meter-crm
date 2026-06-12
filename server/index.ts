@@ -16,6 +16,8 @@ declare module "http" {
 
 app.use(
   express.json({
+    // Default is 100kb; a full 500-row contact import commit can exceed that.
+    limit: "2mb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },

@@ -248,6 +248,16 @@ export const storage = {
   createContact(data: InsertContact): Contact {
     return db.insert(contacts).values(data).returning().get();
   },
+  /** Inserts all rows in one SQLite transaction — if any insert fails, none are saved. */
+  bulkCreateContacts(rows: InsertContact[]): number {
+    const insertAll = sqlite.transaction((items: InsertContact[]) => {
+      for (const item of items) {
+        db.insert(contacts).values(item).run();
+      }
+      return items.length;
+    });
+    return insertAll(rows);
+  },
   deleteContact(id: number) {
     db.delete(contacts).where(eq(contacts.id, id)).run();
   },

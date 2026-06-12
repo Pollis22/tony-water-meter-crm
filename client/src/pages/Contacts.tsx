@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Mail, Phone, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ImportContactsDialog from '@/components/ImportContactsDialog';
 
 interface ContactRow {
   source: 'primary' | 'extra';
@@ -89,6 +90,8 @@ export default function Contacts() {
           <h1 className="text-xl font-semibold">Contacts</h1>
           <p className="text-sm text-muted-foreground">{filtered.length} of {rows.length} contacts</p>
         </div>
+        <div className="flex items-center gap-2">
+        <ImportContactsDialog />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button data-testid="button-open-add-contact"><Plus className="w-4 h-4 mr-1" /> Add Contact</Button>
@@ -136,6 +139,7 @@ export default function Contacts() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       <Input className="mb-4 max-w-md" placeholder="Search contacts..." value={q} onChange={e => setQ(e.target.value)} data-testid="input-search" />
       <Card><CardContent className="p-0">

@@ -14,10 +14,13 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // FormData must go out without a Content-Type header so the browser can set
+  // the multipart boundary itself.
+  const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
   const res = await fetch(`${API_BASE}${url}`, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers: data && !isFormData ? { "Content-Type": "application/json" } : {},
+    body: isFormData ? data : data ? JSON.stringify(data) : undefined,
   });
 
   await throwIfResNotOk(res);

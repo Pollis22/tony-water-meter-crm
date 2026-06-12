@@ -1,7 +1,10 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer } from 'node:http';
 import type { Server } from 'node:http';
+import multer from "multer";
+import { z } from "zod";
 import { storage } from "./storage";
+import { parseContactFiles, MAX_IMPORT_ROWS } from "./importContacts";
 import {
   insertAccountSchema, insertContactSchema, insertTaskSchema,
   insertNoteSchema, insertActivitySchema, insertOpportunitySchema, insertRouteSchema,
@@ -45,6 +48,80 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.delete("/api/contacts/:id", (req, res) => {
     storage.deleteContact(Number(req.params.id));
     res.json({ ok: true });
+  });
+
+  // ---------- Bulk contact import ----------
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024, files: 5 }, // 10 MB each, max 5 files
+  });
+  // Wrap multer so its errors (file too large, too many files) come back as
+  // friendly 400s instead of falling through to the global 500 handler.
+  const uploadFiles = (req: Request, res: Response, next: NextFunction) => {
+    upload.array("files", 5)(req, res, (err: any) => {
+      if (err) {
+        const msg =
+          err.code === "LIMIT_FILE_SIZE" ? "Each file must be 10 MB or smaller." :
+          err.code === "LIMIT_FILE_COUNT" || err.code === "LIMIT_UNEXPECTED_FILE" ? "Upload up to 5 files at a time." :
+          "Could not read the uploaded files.";
+        return res.status(400).json({ error: msg });
+      }
+      next();
+    });
+  };
+
+  app.post("/api/contacts/import/parse", uploadFiles, async (req, res) => {
+    try {
+      const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+      if (!files.length) return res.status(400).json({ error: "No files uploaded." });
+      const result = await parseContactFiles(
+        files.map((f) => ({ name: f.originalname, buffer: f.buffer })),
+        storage.listAccounts(),
+        storage.listContacts(),
+      );
+      res.json(result);
+    } catch (e: any) {
+      console.error("[import/parse]", e);
+      res.status(422).json({ error: "Could not read files." });
+    }
+  });
+
+  const importCommitSchema = z.object({
+    contacts: z.array(z.object({
+      accountId: z.number().int().positive(),
+      name: z.string().trim().min(1, "Name is required"),
+      title: z.string().nullish(),
+      email: z.string().nullish(),
+      phone: z.string().nullish(),
+      notes: z.string().nullish(),
+    })).min(1).max(MAX_IMPORT_ROWS),
+  });
+
+  app.post("/api/contacts/import/commit", (req, res) => {
+    const parsed = importCommitSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    // Validate every account id before touching the database — all rows or none.
+    const validIds = new Set(storage.listAccounts().map((a) => a.id));
+    const unknown = parsed.data.contacts.filter((c) => !validIds.has(c.accountId));
+    if (unknown.length) {
+      return res.status(400).json({
+        error: `${unknown.length} row(s) reference an account that doesn't exist. Nothing was saved.`,
+      });
+    }
+    try {
+      const inserted = storage.bulkCreateContacts(parsed.data.contacts.map((c) => ({
+        accountId: c.accountId,
+        name: c.name,
+        title: c.title?.trim() || null,
+        email: c.email?.trim() || null,
+        phone: c.phone?.trim() || null,
+        notes: c.notes?.trim() || null,
+      })));
+      res.json({ inserted });
+    } catch (e: any) {
+      console.error("[import/commit]", e);
+      res.status(500).json({ error: "Import failed — nothing was saved." });
+    }
   });
 
   // ---------- Tasks ----------
