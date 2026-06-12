@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import type { Account } from "@shared/schema";
+import { ocrImage, isImageFile } from "./ocr";
 
 // ---------------------------------------------------------------------------
 // Bulk ACCOUNT import: parses XLSX / XLS / CSV / PDF buffers into preview rows
@@ -425,6 +426,57 @@ async function parsePdf(buffer: Buffer, sourceFile: string, warnings: string[]):
   return rows;
 }
 
+// ---------- photo (OCR) parsing ----------
+
+/** Runs the spreadsheet column engine over an OCR-reconstructed cell grid. */
+function gridPass(grid: string[][], sourceFile: string, existing: ReturnType<typeof buildExistingIndex>): RawAccount[] {
+  const rows = grid.map((r) => r.map(clean)).filter((r) => r.some(Boolean));
+  const multiCell = rows.filter((r) => r.length >= 2).length;
+  if (!rows.length || multiCell / rows.length < 0.5) return [];
+  const headerMap = detectHeaderMap(rows[0]);
+  if (headerMap) return rowsToAccounts(rows.slice(1), headerMap, sourceFile);
+  const inferred = inferColumns(rows, existing);
+  if (inferred.size === 0) return [];
+  return rowsToAccounts(rows, inferred, sourceFile);
+}
+
+async function parseImage(
+  buffer: Buffer,
+  sourceFile: string,
+  warnings: string[],
+  existing: ReturnType<typeof buildExistingIndex>,
+): Promise<RawAccount[]> {
+  let text = "";
+  let grid: string[][] = [];
+  try {
+    const res = await ocrImage(buffer);
+    text = res.text;
+    grid = res.grid;
+  } catch (e: any) {
+    warnings.push(`${sourceFile}: photo could not be read — skipped.`);
+    return [];
+  }
+  if (!text.trim()) {
+    warnings.push(`${sourceFile}: no readable text found in the photo. Try a sharper, straight-on shot in good light.`);
+    return [];
+  }
+  const labeled = pdfLabeledPass(text, sourceFile);
+  const tabular = gridPass(grid, sourceFile, existing);
+  // Merge keyed on normalized account name; labeled blocks win.
+  const merged: RawAccount[] = [];
+  const seen = new Set<string>();
+  for (const r of [...labeled, ...tabular]) {
+    const key = norm(r.name || r.city || "");
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    merged.push(r);
+  }
+  if (!merged.length) {
+    warnings.push(`${sourceFile}: text was read but no accounts were recognized. OCR works best on printed lists, not handwriting.`);
+  }
+  return merged;
+}
+
 // ---------- finalize ----------
 
 function finalize(raws: RawAccount[], accounts: Account[]): { rows: ParsedAccountRow[]; truncated: boolean } {
@@ -493,10 +545,12 @@ export async function parseAccountFiles(files: UploadedFile[], accounts: Account
     try {
       if (ext === "pdf") {
         raws.push(...(await parsePdf(f.buffer, f.name, warnings)));
-      } else if (["xlsx", "xls", "csv"].includes(ext)) {
+      } else if (["xlsx", "xls", "csv", "tsv", "txt"].includes(ext)) {
         raws.push(...parseSpreadsheet(f.buffer, f.name, warnings, existing));
+      } else if (isImageFile(f.name, f.buffer)) {
+        raws.push(...(await parseImage(f.buffer, f.name, warnings, existing)));
       } else {
-        warnings.push(`${f.name}: unsupported file type — skipped.`);
+        warnings.push(`${f.name}: unsupported file type — use CSV, XLSX, XLS, PDF, or a photo (JPG/PNG).`);
       }
     } catch (e) {
       warnings.push(`${f.name}: could not be processed — skipped.`);

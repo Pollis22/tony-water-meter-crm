@@ -12,7 +12,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { TIERS } from '@/lib/format';
-import { Upload, FileSpreadsheet, FileText, X, Download, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, Image as ImageIcon, X, Download, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 // Mirrors ParsedAccountRow from server/importAccounts.ts (plus client-only fields).
 interface ImportRow {
@@ -48,7 +48,7 @@ interface ParseResponse {
 
 type Step = 'pick' | 'review' | 'done';
 
-const ACCEPTED = ['.csv', '.xlsx', '.xls', '.pdf'];
+const ACCEPTED = ['.csv', '.xlsx', '.xls', '.pdf', '.jpg', '.jpeg', '.png', '.webp'];
 const MAX_FILES = 5;
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -59,9 +59,10 @@ const TEMPLATE_CSV = [
 ].join('\n');
 
 function fileIcon(name: string) {
-  return name.toLowerCase().endsWith('.pdf')
-    ? <FileText className="w-3.5 h-3.5 shrink-0" />
-    : <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />;
+  const n = name.toLowerCase();
+  if (n.endsWith('.pdf')) return <FileText className="w-3.5 h-3.5 shrink-0" />;
+  if (/\.(jpe?g|png|webp)$/.test(n)) return <ImageIcon className="w-3.5 h-3.5 shrink-0" />;
+  return <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />;
 }
 
 const STATUS_OPTIONS = ['Not Started', 'Researching', 'Contacted', 'Meeting Set', 'Proposal Sent', 'Won', 'Lost', 'Nurture', 'Prospect', 'Customer', 'Dead'];
@@ -91,7 +92,7 @@ export default function ImportAccountsDialog() {
     for (const f of Array.from(incoming)) {
       const ext = '.' + (f.name.split('.').pop() ?? '').toLowerCase();
       if (!ACCEPTED.includes(ext)) {
-        toast({ title: 'Unsupported file type', description: `${f.name} — use CSV, XLSX, XLS, or PDF.`, variant: 'destructive' });
+        toast({ title: 'Unsupported file type', description: `${f.name} — use CSV, XLSX, XLS, PDF, or a photo (JPG/PNG).`, variant: 'destructive' });
         continue;
       }
       if (f.size > MAX_BYTES) {
@@ -212,7 +213,7 @@ export default function ImportAccountsDialog() {
             <DialogHeader>
               <DialogTitle>Import accounts</DialogTitle>
               <DialogDescription>
-                Upload up to 5 files (CSV, XLSX, XLS, or PDF, 10 MB each). Columns are detected automatically — you'll review everything before it's saved.
+                Upload up to 5 files (CSV, XLSX, XLS, PDF — or a photo of a printed list, 10 MB each). Columns are detected automatically — you'll review everything before it's saved.
               </DialogDescription>
             </DialogHeader>
             <div
@@ -225,7 +226,7 @@ export default function ImportAccountsDialog() {
             >
               <Upload className="w-7 h-7 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm font-medium">Drop files here or click to browse</p>
-              <p className="text-xs text-muted-foreground mt-1">A territory spreadsheet, a prospect list, a county utility directory…</p>
+              <p className="text-xs text-muted-foreground mt-1">A territory spreadsheet, a county utility directory — or snap a photo of a printed list…</p>
               <input
                 ref={inputRef} type="file" multiple accept={ACCEPTED.join(',')} className="hidden"
                 onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}

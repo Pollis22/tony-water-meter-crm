@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileSpreadsheet, FileText, X, Download, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, Image as ImageIcon, X, Download, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 // Mirrors ParsedContactRow from server/importContacts.ts
 interface ImportRow {
@@ -37,7 +37,7 @@ interface ParseResponse {
 
 type Step = 'pick' | 'review' | 'done';
 
-const ACCEPTED = ['.csv', '.xlsx', '.xls', '.pdf'];
+const ACCEPTED = ['.csv', '.xlsx', '.xls', '.pdf', '.jpg', '.jpeg', '.png', '.webp'];
 const MAX_FILES = 5;
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -48,9 +48,10 @@ const TEMPLATE_CSV = [
 ].join('\n');
 
 function fileIcon(name: string) {
-  return name.toLowerCase().endsWith('.pdf')
-    ? <FileText className="w-3.5 h-3.5 shrink-0" />
-    : <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />;
+  const n = name.toLowerCase();
+  if (n.endsWith('.pdf')) return <FileText className="w-3.5 h-3.5 shrink-0" />;
+  if (/\.(jpe?g|png|webp)$/.test(n)) return <ImageIcon className="w-3.5 h-3.5 shrink-0" />;
+  return <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />;
 }
 
 export default function ImportContactsDialog() {
@@ -79,7 +80,7 @@ export default function ImportContactsDialog() {
     for (const f of Array.from(incoming)) {
       const ext = '.' + (f.name.split('.').pop() ?? '').toLowerCase();
       if (!ACCEPTED.includes(ext)) {
-        toast({ title: 'Unsupported file type', description: `${f.name} — use CSV, XLSX, XLS, or PDF.`, variant: 'destructive' });
+        toast({ title: 'Unsupported file type', description: `${f.name} — use CSV, XLSX, XLS, PDF, or a photo (JPG/PNG).`, variant: 'destructive' });
         continue;
       }
       if (f.size > MAX_BYTES) {
@@ -196,7 +197,7 @@ export default function ImportContactsDialog() {
             <DialogHeader>
               <DialogTitle>Import contacts</DialogTitle>
               <DialogDescription>
-                Upload up to 5 files (CSV, XLSX, XLS, or PDF, 10 MB each). You'll review every row before anything is saved.
+                Upload up to 5 files (CSV, XLSX, XLS, PDF — or a photo of a printed list, 10 MB each). You'll review every row before anything is saved.
               </DialogDescription>
             </DialogHeader>
             <div
@@ -209,7 +210,7 @@ export default function ImportContactsDialog() {
             >
               <Upload className="w-7 h-7 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm font-medium">Drop files here or click to browse</p>
-              <p className="text-xs text-muted-foreground mt-1">A spreadsheet export, a conference attendee list, a PDF directory…</p>
+              <p className="text-xs text-muted-foreground mt-1">A spreadsheet export, a PDF directory — or snap a photo of a printed contact list…</p>
               <input
                 ref={inputRef} type="file" multiple accept={ACCEPTED.join(',')} className="hidden"
                 onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}

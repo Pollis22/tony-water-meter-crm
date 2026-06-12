@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import type { Account, Contact } from "@shared/schema";
+import { ocrImage, isImageFile } from "./ocr";
 
 // ---------------------------------------------------------------------------
 // Bulk contact import: parses XLSX / XLS / CSV / PDF buffers into preview rows.
@@ -443,12 +444,67 @@ async function parsePdf(buffer: Buffer, sourceFile: string, warnings: string[], 
   return merged;
 }
 
+// ---------- photo (OCR) parsing ----------
+
+/** Runs the spreadsheet column engine over an OCR-reconstructed cell grid. */
+function gridPass(grid: string[][], sourceFile: string, matcher: AccountMatcher): RawContact[] {
+  const rows = grid.map((r) => r.map(clean)).filter((r) => r.some(Boolean));
+  // Only worth running when the photo actually looks tabular.
+  const multiCell = rows.filter((r) => r.length >= 2).length;
+  if (!rows.length || multiCell / rows.length < 0.5) return [];
+  const headerMap = detectHeaderMap(rows[0]);
+  if (headerMap) return rowsToContacts(rows.slice(1), headerMap, sourceFile);
+  const inferred = inferColumns(rows, matcher);
+  if (inferred.size === 0) return [];
+  return rowsToContacts(rows, inferred, sourceFile);
+}
+
+async function parseImage(buffer: Buffer, sourceFile: string, warnings: string[], matcher: AccountMatcher): Promise<RawContact[]> {
+  let text = "";
+  let grid: string[][] = [];
+  try {
+    const res = await ocrImage(buffer);
+    text = res.text;
+    grid = res.grid;
+  } catch (e: any) {
+    warnings.push(`${sourceFile}: photo could not be read — skipped. (${clean(e?.message ?? e).slice(0, 120)})`);
+    return [];
+  }
+  if (!clean(text)) {
+    warnings.push(`${sourceFile}: no readable text found in the photo. Try a sharper, straight-on shot in good light.`);
+    return [];
+  }
+
+  // Same passes as PDFs (labels + email/phone line scan) plus the tabular grid pass.
+  const labeled = pdfLabeledPass(text, sourceFile);
+  const lined = pdfLinePass(text, sourceFile, matcher);
+  const tabular = gridPass(grid, sourceFile, matcher);
+
+  // Merge with the same precedence rules as PDF: keyed on email, then name.
+  const merged: RawContact[] = [];
+  const seenEmails = new Set<string>();
+  const seenNames = new Set<string>();
+  for (const r of [...labeled, ...tabular, ...lined]) {
+    const ekey = r.email?.toLowerCase();
+    if (ekey && seenEmails.has(ekey)) continue;
+    if (!ekey && r.name && seenNames.has(norm(r.name))) continue;
+    merged.push(r);
+    if (ekey) seenEmails.add(ekey);
+    if (r.name) seenNames.add(norm(r.name));
+  }
+  if (!merged.length) {
+    warnings.push(`${sourceFile}: text was read but no contacts were recognized. OCR works best on printed lists, not handwriting.`);
+  }
+  return merged;
+}
+
 // ---------- file-type routing ----------
 
-function sniffKind(file: UploadedFile): "pdf" | "sheet" | "unknown" {
+function sniffKind(file: UploadedFile): "pdf" | "sheet" | "image" | "unknown" {
   const ext = (file.name.split(".").pop() ?? "").toLowerCase();
   if (ext === "pdf") return "pdf";
   if (["xlsx", "xls", "csv", "tsv", "txt"].includes(ext)) return "sheet";
+  if (isImageFile(file.name, file.buffer)) return "image";
   const head = file.buffer.subarray(0, 5).toString("latin1");
   if (head.startsWith("%PDF")) return "pdf";
   if (head.startsWith("PK\x03\x04")) return "sheet"; // zip container = xlsx
@@ -473,8 +529,10 @@ export async function parseContactFiles(
         raw.push(...(await parsePdf(file.buffer, file.name, warnings, matcher)));
       } else if (kind === "sheet") {
         raw.push(...parseSpreadsheet(file.buffer, file.name, warnings, matcher));
+      } else if (kind === "image") {
+        raw.push(...(await parseImage(file.buffer, file.name, warnings, matcher)));
       } else {
-        warnings.push(`${file.name}: unsupported file type — use CSV, XLSX, XLS, or PDF.`);
+        warnings.push(`${file.name}: unsupported file type — use CSV, XLSX, XLS, PDF, or a photo (JPG/PNG).`);
       }
     } catch (e: any) {
       // Per-file belt-and-suspenders: a bad file never takes down the request.
