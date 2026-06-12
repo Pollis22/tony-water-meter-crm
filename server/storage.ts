@@ -14,7 +14,13 @@ import { eq, desc, asc } from "drizzle-orm";
 import fs from 'node:fs';
 import path from 'node:path';
 
-const sqlite = new Database("data.db");
+// Resolve the database location. Railway (or any host with a persistent
+// volume) sets DB_PATH, e.g. /data/data.db; locally we fall back to ./data.db.
+// Without this, the file lands in the ephemeral working directory and is
+// wiped on every redeploy.
+const dbPath = process.env.DB_PATH || "data.db";
+fs.mkdirSync(path.dirname(path.resolve(dbPath)), { recursive: true });
+const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
 
 // Apply schema (idempotent)
