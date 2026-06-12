@@ -232,6 +232,18 @@ export const storage = {
   createAccount(data: InsertAccount): Account {
     return db.insert(accounts).values(data as any).returning().get();
   },
+  /**
+   * Bulk account import. `creates` are inserted; `updates` patch existing rows
+   * by id. All in one transaction — any failure rolls back the whole batch.
+   */
+  bulkUpsertAccounts(creates: InsertAccount[], updates: { id: number; data: Partial<InsertAccount> }[]): { created: number; updated: number } {
+    const run = sqlite.transaction(() => {
+      for (const c of creates) db.insert(accounts).values(c as any).run();
+      for (const u of updates) db.update(accounts).set(u.data as any).where(eq(accounts.id, u.id)).run();
+      return { created: creates.length, updated: updates.length };
+    });
+    return run();
+  },
   updateAccount(id: number, data: Partial<InsertAccount>): Account | undefined {
     db.update(accounts).set(data as any).where(eq(accounts.id, id)).run();
     return this.getAccount(id);

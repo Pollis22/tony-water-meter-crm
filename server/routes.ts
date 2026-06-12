@@ -9,6 +9,7 @@ import nodePath from "node:path";
 import nodeFs from "node:fs";
 import { storage } from "./storage";
 import { parseContactFiles, MAX_IMPORT_ROWS } from "./importContacts";
+import { parseAccountFiles } from "./importAccounts";
 import {
   insertAccountSchema, insertContactSchema, insertTaskSchema,
   insertNoteSchema, insertActivitySchema, insertOpportunitySchema, insertRouteSchema,
@@ -124,6 +125,105 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.json({ inserted });
     } catch (e: any) {
       console.error("[import/commit]", e);
+      res.status(500).json({ error: "Import failed — nothing was saved." });
+    }
+  });
+
+  // ---------- Account bulk import ----------
+  app.post("/api/accounts/import/parse", uploadFiles, async (req, res) => {
+    try {
+      const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+      if (!files.length) return res.status(400).json({ error: "No files uploaded." });
+      const result = await parseAccountFiles(
+        files.map((f) => ({ name: f.originalname, buffer: f.buffer })),
+        storage.listAccounts(),
+      );
+      res.json(result);
+    } catch (e: any) {
+      console.error("[accounts/import/parse]", e);
+      res.status(422).json({ error: "Could not read files." });
+    }
+  });
+
+  const accountImportSchema = z.object({
+    accounts: z.array(z.object({
+      // null id = create; positive id = update existing
+      id: z.number().int().positive().nullable().optional(),
+      name: z.string().trim().min(1, "Name is required"),
+      county: z.string().nullish(),
+      city: z.string().nullish(),
+      tier: z.string().nullish(),
+      population: z.number().int().nonnegative().nullish(),
+      endpoints: z.number().int().nonnegative().nullish(),
+      primaryContact: z.string().nullish(),
+      contactTitle: z.string().nullish(),
+      phone: z.string().nullish(),
+      email: z.string().nullish(),
+      address: z.string().nullish(),
+      cityState: z.string().nullish(),
+      status: z.string().nullish(),
+      priority: z.string().nullish(),
+      waterBudgetUsd: z.number().int().nullish(),
+      insight: z.string().nullish(),
+    })).min(1).max(MAX_IMPORT_ROWS),
+  });
+
+  app.post("/api/accounts/import/commit", (req, res) => {
+    const parsed = accountImportSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+    const validIds = new Set(storage.listAccounts().map((a) => a.id));
+    // Index existing names so a "create" can't silently duplicate an account.
+    const normName = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const existingNames = new Map<string, number>();
+    for (const a of storage.listAccounts()) existingNames.set(normName(a.name), a.id);
+
+    const creates: any[] = [];
+    const updates: { id: number; data: any }[] = [];
+
+    for (const a of parsed.data.accounts) {
+      // Required-by-schema columns that the importer may not supply get sane defaults.
+      const fields = {
+        name: a.name.trim(),
+        county: a.county?.trim() || "",
+        city: a.city?.trim() || a.name.trim(),
+        tier: a.tier?.trim() || "Tier 3",
+        population: a.population ?? 0,
+        endpoints: a.endpoints ?? 0,
+        primaryContact: a.primaryContact?.trim() || null,
+        contactTitle: a.contactTitle?.trim() || null,
+        phone: a.phone?.trim() || null,
+        email: a.email?.trim() || null,
+        address: a.address?.trim() || null,
+        cityState: a.cityState?.trim() || null,
+        status: a.status?.trim() || "Not Started",
+        priority: a.priority?.trim() || "Medium",
+        waterBudgetUsd: a.waterBudgetUsd ?? null,
+        insight: a.insight?.trim() || null,
+      };
+      if (a.id != null) {
+        if (!validIds.has(a.id)) {
+          return res.status(400).json({ error: `Row references account #${a.id}, which doesn't exist. Nothing was saved.` });
+        }
+        updates.push({ id: a.id, data: fields });
+      } else {
+        // Reject a create that would duplicate an existing account name — the
+        // client should have sent it as an update or skipped it.
+        const clash = existingNames.get(normName(fields.name));
+        if (clash != null) {
+          return res.status(400).json({
+            error: `"${fields.name}" already exists. Uncheck it or switch it to "Update existing". Nothing was saved.`,
+          });
+        }
+        creates.push(fields);
+      }
+    }
+
+    try {
+      const result = storage.bulkUpsertAccounts(creates, updates);
+      res.json(result);
+    } catch (e: any) {
+      console.error("[accounts/import/commit]", e);
       res.status(500).json({ error: "Import failed — nothing was saved." });
     }
   });

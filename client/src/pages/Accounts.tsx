@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { fmtNum, tierColor, priorityColor, statusColor, scoreColor, STATUSES, PRIORITIES, TIERS } from '@/lib/format';
 import { ArrowUpDown, LayoutGrid, Table as TableIcon, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ImportAccountsDialog from '@/components/ImportAccountsDialog';
 
 type SortKey = 'name' | 'county' | 'tier' | 'endpoints' | 'candidateScore' | 'status' | 'waterBudgetUsd';
 
@@ -155,6 +156,7 @@ export default function Accounts() {
               <TabsTrigger value="kanban" data-testid="tab-kanban"><LayoutGrid className="w-4 h-4 mr-1" /> Kanban</TabsTrigger>
             </TabsList>
           </Tabs>
+          <ImportAccountsDialog />
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
               <Button data-testid="button-open-add-account"><Plus className="w-4 h-4 mr-1" /> Add Account</Button>
