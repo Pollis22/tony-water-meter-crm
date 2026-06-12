@@ -322,6 +322,70 @@ export const storage = {
   },
 
   // Routes
+  // ---------- Field workflow ----------
+  /** Logs an activity and (optionally) bumps lastContactedAt / nextFollowUpAt in one transaction. */
+  logTouch(accountId: number, opts: {
+    type: string; summary: string; outcome: string | null;
+    nextFollowUpAt?: string | null; touch: boolean; today: string;
+  }): { activity: Activity; account: Account } {
+    const run = sqlite.transaction(() => {
+      const activity = db.insert(activities)
+        .values({ accountId, type: opts.type, summary: opts.summary, outcome: opts.outcome })
+        .returning().get();
+      const patch: Partial<InsertAccount> = {};
+      if (opts.touch) patch.lastContactedAt = opts.today;
+      if (opts.nextFollowUpAt !== undefined) patch.nextFollowUpAt = opts.nextFollowUpAt;
+      const account = Object.keys(patch).length
+        ? db.update(accounts).set(patch).where(eq(accounts.id, accountId)).returning().get()
+        : db.select().from(accounts).where(eq(accounts.id, accountId)).get();
+      return { activity, account: account! };
+    });
+    return run();
+  },
+  listAllActivities(): Activity[] {
+    return db.select().from(activities).orderBy(desc(activities.id)).all();
+  },
+  /** LIKE-based search across every table. At this scale (one rep's book) it's instant and needs no FTS shadow tables. */
+  searchAll(qRaw: string) {
+    const q = `%${qRaw.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+    const p = { q };
+    const acc = sqlite.prepare(`
+      SELECT id, name, county, tier, candidate_score AS score FROM accounts
+      WHERE name LIKE @q ESCAPE '\\' OR county LIKE @q ESCAPE '\\' OR city LIKE @q ESCAPE '\\'
+         OR primary_contact LIKE @q ESCAPE '\\' OR notes LIKE @q ESCAPE '\\' OR insight LIKE @q ESCAPE '\\'
+      ORDER BY candidate_score DESC LIMIT 6`).all(p);
+    const con = sqlite.prepare(`
+      SELECT c.id, c.account_id AS accountId, c.name, c.title, c.email, a.name AS accountName
+      FROM contacts c LEFT JOIN accounts a ON a.id = c.account_id
+      WHERE c.name LIKE @q ESCAPE '\\' OR c.email LIKE @q ESCAPE '\\' OR c.title LIKE @q ESCAPE '\\'
+      LIMIT 6`).all(p);
+    const nts = sqlite.prepare(`
+      SELECT n.id, n.account_id AS accountId, substr(n.body, 1, 90) AS snippet, a.name AS accountName
+      FROM notes n LEFT JOIN accounts a ON a.id = n.account_id
+      WHERE n.body LIKE @q ESCAPE '\\' ORDER BY n.id DESC LIMIT 6`).all(p);
+    const act = sqlite.prepare(`
+      SELECT v.id, v.account_id AS accountId, v.type, substr(v.summary, 1, 90) AS summary,
+             v.occurred_at AS occurredAt, a.name AS accountName
+      FROM activities v LEFT JOIN accounts a ON a.id = v.account_id
+      WHERE v.summary LIKE @q ESCAPE '\\' OR v.outcome LIKE @q ESCAPE '\\'
+      ORDER BY v.id DESC LIMIT 6`).all(p);
+    const tks = sqlite.prepare(`
+      SELECT t.id, t.account_id AS accountId, t.title, t.due_date AS dueDate, t.status, a.name AS accountName
+      FROM tasks t LEFT JOIN accounts a ON a.id = t.account_id
+      WHERE t.title LIKE @q ESCAPE '\\' OR t.description LIKE @q ESCAPE '\\'
+      ORDER BY t.id DESC LIMIT 6`).all(p);
+    const opp = sqlite.prepare(`
+      SELECT o.id, o.account_id AS accountId, o.name, o.stage, a.name AS accountName
+      FROM opportunities o LEFT JOIN accounts a ON a.id = o.account_id
+      WHERE o.name LIKE @q ESCAPE '\\' OR o.stage LIKE @q ESCAPE '\\'
+      ORDER BY o.id DESC LIMIT 6`).all(p);
+    return { accounts: acc, contacts: con, notes: nts, activities: act, tasks: tks, opportunities: opp };
+  },
+  /** Consistent online snapshot of the live database (safe while the app is running). */
+  async backupDatabase(dest: string): Promise<void> {
+    await sqlite.backup(dest);
+  },
+
   listRoutes(): Route[] {
     return db.select().from(routes).orderBy(desc(routes.createdAt)).all();
   },

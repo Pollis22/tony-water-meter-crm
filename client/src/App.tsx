@@ -16,12 +16,16 @@ import Contacts from "@/pages/Contacts";
 import Opportunities from "@/pages/Opportunities";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
+import ThisWeek from "@/pages/ThisWeek";
+import Brief from "@/pages/Brief";
 
 function AppRouter() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/week" component={ThisWeek} />
       <Route path="/accounts" component={Accounts} />
+      <Route path="/accounts/:id/brief" component={Brief} />
       <Route path="/accounts/:id" component={AccountDetail} />
       <Route path="/contacts" component={Contacts} />
       <Route path="/opportunities" component={Opportunities} />

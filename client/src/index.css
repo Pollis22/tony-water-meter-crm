@@ -338,3 +338,14 @@
     inset: -1px;
   }
 }
+
+/* ---------- Print (pre-call brief) ---------- */
+@media print {
+  .no-print { display: none !important; }
+  aside { display: none !important; }
+  header { display: none !important; }
+  main { overflow: visible !important; }
+  body { background: white !important; }
+  .print-page { padding: 0 !important; max-width: 100% !important; }
+  a { color: inherit; }
+}

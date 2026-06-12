@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
 import { fmtNum, tierColor, statusColor, scoreColor } from '@/lib/format';
 import { Building2, MapPin, Target, TrendingUp, Calendar, Layers } from 'lucide-react';
+import { FollowUpQueue } from '@/components/FollowUpQueue';
 
 interface Summary {
   total: number;
@@ -61,6 +62,10 @@ export default function Dashboard() {
         <StatCard label="Tier 1" value={s.byTier['Tier 1'] || 0} sub="strategic" icon={Target} />
         <StatCard label="Total Endpoints" value={fmtNum(s.totalEndpoints)} sub="metered customers" icon={Layers} />
         <StatCard label="Counties" value={Object.keys(s.byCounty).length} sub="across territory" icon={MapPin} />
+      </div>
+
+      <div className="mb-6">
+        <FollowUpQueue limit={6} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">

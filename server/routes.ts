@@ -3,6 +3,10 @@ import { createServer } from 'node:http';
 import type { Server } from 'node:http';
 import multer from "multer";
 import { z } from "zod";
+import * as XLSX from "xlsx";
+import os from "node:os";
+import nodePath from "node:path";
+import nodeFs from "node:fs";
 import { storage } from "./storage";
 import { parseContactFiles, MAX_IMPORT_ROWS } from "./importContacts";
 import {
@@ -121,6 +125,91 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     } catch (e: any) {
       console.error("[import/commit]", e);
       res.status(500).json({ error: "Import failed — nothing was saved." });
+    }
+  });
+
+  // ---------- Field workflow: quick log, search, backup ----------
+  const localDay = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  const logSchema = z.object({
+    type: z.enum(["call", "email", "meeting", "visit", "note"]),
+    outcome: z.string().trim().max(120).optional(),
+    note: z.string().trim().max(4000).optional(),
+    // null clears the follow-up; omitted leaves it untouched
+    nextFollowUpAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  });
+  const DEFAULT_SUMMARY: Record<string, string> = {
+    call: "Call logged", email: "Email sent", meeting: "Meeting held", visit: "Site visit", note: "Note",
+  };
+
+  app.post("/api/accounts/:id/log", (req, res) => {
+    const id = Number(req.params.id);
+    const account = storage.getAccount(id);
+    if (!account) return res.status(404).json({ error: "Account not found" });
+    const parsed = logSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const b = parsed.data;
+    const summary = b.note?.trim()
+      ? (b.outcome ? `${b.outcome} — ${b.note.trim()}` : b.note.trim())
+      : (b.outcome || DEFAULT_SUMMARY[b.type]);
+    try {
+      const result = storage.logTouch(id, {
+        type: b.type,
+        summary: summary.slice(0, 4000),
+        outcome: b.outcome ?? null,
+        nextFollowUpAt: "nextFollowUpAt" in req.body ? b.nextFollowUpAt : undefined,
+        touch: b.type !== "note", // plain notes don't count as contacting the account
+        today: localDay(),
+      });
+      res.json(result);
+    } catch (e) {
+      console.error("[log]", e);
+      res.status(500).json({ error: "Could not save the log entry." });
+    }
+  });
+
+  app.get("/api/search", (req, res) => {
+    const q = String(req.query.q ?? "").trim();
+    if (q.length < 2) {
+      return res.json({ accounts: [], contacts: [], notes: [], activities: [], tasks: [], opportunities: [] });
+    }
+    res.json(storage.searchAll(q.slice(0, 80)));
+  });
+
+  app.get("/api/backup/database", async (_req, res) => {
+    const tmp = nodePath.join(os.tmpdir(), `tony-crm-${Date.now()}.db`);
+    try {
+      await storage.backupDatabase(tmp);
+      res.download(tmp, `tony-crm-backup-${localDay()}.db`, () => nodeFs.unlink(tmp, () => {}));
+    } catch (e) {
+      console.error("[backup]", e);
+      nodeFs.unlink(tmp, () => {});
+      res.status(500).json({ error: "Backup failed." });
+    }
+  });
+
+  app.get("/api/backup/export.xlsx", (_req, res) => {
+    try {
+      const wb = XLSX.utils.book_new();
+      const add = (name: string, rows: object[]) =>
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{}]), name);
+      add("Accounts", storage.listAccounts());
+      add("Contacts", storage.listContacts());
+      add("Activities", storage.listAllActivities());
+      add("Tasks", storage.listTasks());
+      add("Notes", storage.listAllNotes());
+      add("Opportunities", storage.listOpportunities());
+      add("Routes", storage.listRoutes());
+      const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="tony-crm-export-${localDay()}.xlsx"`);
+      res.send(buf);
+    } catch (e) {
+      console.error("[export]", e);
+      res.status(500).json({ error: "Export failed." });
     }
   });
 

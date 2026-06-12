@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
@@ -70,6 +70,19 @@ export default function RoutePlanner() {
   const [startCoord, setStartCoord] = useState<[number, number] | null>(null);
   const [routeName, setRouteName] = useState('');
   const [optimized, setOptimized] = useState<OptimizeResult | null>(null);
+
+  // Preseed selection from "#/route-planner?accounts=1,2,3" (This Week hands off here).
+  const preseeded = useRef(false);
+  useEffect(() => {
+    if (preseeded.current || accounts.length === 0) return;
+    preseeded.current = true;
+    const qs = window.location.hash.split('?')[1];
+    if (!qs) return;
+    const ids = (new URLSearchParams(qs).get('accounts') || '')
+      .split(',').map(Number)
+      .filter((n) => accounts.some((a) => a.id === n));
+    if (ids.length) setSelected(ids);
+  }, [accounts]);
 
   const counties = useMemo(() => Array.from(new Set(accounts.map(a => a.county))).sort(), [accounts]);
 

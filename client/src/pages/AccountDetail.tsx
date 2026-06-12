@@ -11,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { fmtNum, tierColor, priorityColor, statusColor, scoreColor, STATUSES, PRIORITIES, TIERS } from '@/lib/format';
-import { ArrowLeft, Mail, Phone, MapPin, Building2, Sparkles, Plus, Trash2, Check, DollarSign, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Sparkles, Plus, Trash2, Check, DollarSign, ExternalLink, FileText } from 'lucide-react';
+import { QuickLogDialog, VoiceNoteCard } from '@/components/FieldLog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AccountDetail() {
@@ -91,7 +92,13 @@ export default function AccountDetail() {
             {account.county} County · {account.city}{account.cityState ? `, ${account.cityState.split(',')[1]?.trim() || ''}` : ''}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <QuickLogDialog account={account} />
+          <Link href={`/accounts/${account.id}/brief`}>
+            <Button variant="outline" size="sm" data-testid="button-open-brief">
+              <FileText className="w-4 h-4 mr-1" /> Brief
+            </Button>
+          </Link>
           <Card className="px-4 py-2">
             <div className="text-xs text-muted-foreground">Candidate Score</div>
             <div className={`text-xl font-semibold ${scoreColor(account.candidateScore)}`} data-testid="text-score">{account.candidateScore}</div>
@@ -309,6 +316,7 @@ export default function AccountDetail() {
         </TabsContent>
 
         <TabsContent value="activity" className="mt-4">
+          <VoiceNoteCard accountId={accountId} />
           <Card><CardContent className="p-4 space-y-2">
             {activities.length === 0 && <div className="text-sm text-muted-foreground">No activity recorded.</div>}
             {activities.map(a => (

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Droplets } from 'lucide-react';
+import { Droplets, DatabaseBackup, FileSpreadsheet } from 'lucide-react';
 
 export default function Settings() {
   return (
@@ -44,6 +45,26 @@ export default function Settings() {
               <li className="flex justify-between"><span className="text-muted-foreground">Map tiles</span><span>OpenStreetMap</span></li>
               <li className="flex justify-between"><span className="text-muted-foreground">Geocoding</span><span>Nominatim</span></li>
             </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><DatabaseBackup className="w-4 h-4 text-blue-600" /> Backup</CardTitle></CardHeader>
+          <CardContent className="text-sm space-y-3">
+            <p className="text-muted-foreground">
+              This database is your book of business. Download a copy before big changes and keep one somewhere safe — it takes one click.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild data-testid="button-backup-db">
+                <a href="/api/backup/database"><DatabaseBackup className="w-4 h-4 mr-1" /> Download database (.db)</a>
+              </Button>
+              <Button asChild variant="outline" data-testid="button-backup-xlsx">
+                <a href="/api/backup/export.xlsx"><FileSpreadsheet className="w-4 h-4 mr-1" /> Export everything (.xlsx)</a>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The .db file is a live snapshot of the full database (restorable as-is). The spreadsheet has one tab per table — accounts, contacts, activities, tasks, notes, opportunities, routes.
+            </p>
           </CardContent>
         </Card>
 
