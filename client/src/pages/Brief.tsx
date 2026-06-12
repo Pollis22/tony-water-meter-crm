@@ -5,7 +5,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { fmtMoney, fmtNum, scoreColor } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Droplets, Printer } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
+import { BRAND } from '@/lib/brand';
 
 function parseSourceLinks(src?: string | null): { title: string; url: string }[] {
   if (!src) return [];
@@ -59,13 +60,11 @@ export default function Brief() {
       <div className="bg-white text-slate-900 rounded-lg border border-slate-200 p-8 print:border-0 print:p-0 print:rounded-none" data-testid="brief-page">
         {/* Brand bar */}
         <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-blue-600 flex items-center justify-center">
-              <Droplets className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="font-semibold text-sm leading-tight">EJP Sales · Pre-Call Brief</div>
-              <div className="text-xs text-slate-500">Tony Robertson · East Michigan territory</div>
+          <div className="flex items-center gap-3">
+            <img src={BRAND.logo} alt="Team EJP" className="h-9 w-auto" />
+            <div className="border-l border-slate-200 pl-3">
+              <div className="font-semibold text-sm leading-tight">Pre-Call Brief</div>
+              <div className="text-xs text-slate-500">{BRAND.rep}</div>
             </div>
           </div>
           <div className="text-xs text-slate-500">{today}</div>
@@ -168,7 +167,7 @@ export default function Brief() {
         </div>
 
         <div className="border-t border-slate-200 mt-5 pt-3 text-[11px] text-slate-400">
-          Prepared {today} · Tony's Territory CRM · Internal use
+          Prepared {today} · {BRAND.company} {BRAND.appName} · Internal use
         </div>
       </div>
     </div>
