@@ -133,11 +133,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950">
-      {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-slate-900 text-slate-100 flex flex-col no-print">
-        <div className="px-5 py-4 border-b border-slate-800">
-          <img src={BRAND.logoWhite} alt="Team EJP" className="h-9 w-auto" />
-          <div className="text-xs text-slate-400 mt-1.5">{BRAND.tagline}</div>
+      {/* Sidebar — white chrome with the blue logo, matching ejprescott.com */}
+      <aside className="w-60 shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col no-print">
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <img src={BRAND.logo} alt="Team EJP" className="h-9 w-auto dark:hidden" />
+          <img src={BRAND.logoWhite} alt="Team EJP" className="h-9 w-auto hidden dark:block" />
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">{BRAND.tagline}</div>
         </div>
         <nav className="flex-1 py-3">
           {NAV.map(item => {
@@ -150,7 +151,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   style={active ? { backgroundColor: BRAND.blue } : undefined}
                   className={cn(
                     'flex items-center gap-3 px-5 py-2 text-sm font-medium cursor-pointer transition-colors',
-                    active ? 'text-white' : 'text-slate-300 hover:bg-slate-800'
+                    active ? 'text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                   )}
                 >
                   <Icon className="w-4 h-4" />
@@ -160,7 +161,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="px-5 py-3 border-t border-slate-800 text-xs text-slate-400">
+        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           {BRAND.rep}
         </div>
       </aside>
