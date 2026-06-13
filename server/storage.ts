@@ -98,7 +98,12 @@ CREATE TABLE IF NOT EXISTS activities (
   type TEXT NOT NULL,
   summary TEXT NOT NULL,
   outcome TEXT,
+  metric_type TEXT,
   occurred_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS opportunities (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -141,6 +146,21 @@ safeAddColumn('accounts', 'water_budget_fiscal_year', 'TEXT');
 safeAddColumn('accounts', 'water_budget_type', 'TEXT');
 safeAddColumn('accounts', 'water_budget_source', 'TEXT');
 safeAddColumn('accounts', 'water_budget_notes', 'TEXT');
+safeAddColumn('activities', 'metric_type', 'TEXT');
+
+// Repair rows where a drizzle string-literal default wrote 'CURRENT_TIMESTAMP'
+// as text instead of a real timestamp (schema bug, fixed in shared/schema.ts).
+// We can't recover the original times; stamping the repair moment keeps the
+// rows valid and sortable. Runs at boot; no-ops once clean.
+for (const [table, col] of [
+  ['accounts', 'created_at'], ['contacts', 'created_at'], ['tasks', 'created_at'], ['notes', 'created_at'],
+  ['opportunities', 'created_at'], ['routes', 'created_at'], ['activities', 'occurred_at'],
+] as const) {
+  try {
+    const fixed = sqlite.prepare(`UPDATE ${table} SET ${col} = datetime('now') WHERE ${col} = 'CURRENT_TIMESTAMP'`).run();
+    if (fixed.changes) console.log(`[migrate] ${table}.${col}: repaired ${fixed.changes} literal-timestamp row(s)`);
+  } catch { /* table may not exist yet on a brand-new database */ }
+}
 
 export const db = drizzle(sqlite);
 
@@ -393,11 +413,18 @@ export const storage = {
   /** Logs an activity and (optionally) bumps lastContactedAt / nextFollowUpAt in one transaction. */
   logTouch(accountId: number, opts: {
     type: string; summary: string; outcome: string | null;
+    metricType?: string | null;
     nextFollowUpAt?: string | null; touch: boolean; today: string;
   }): { activity: Activity; account: Account } {
     const run = sqlite.transaction(() => {
       const activity = db.insert(activities)
-        .values({ accountId, type: opts.type, summary: opts.summary, outcome: opts.outcome })
+        .values({
+          accountId, type: opts.type, summary: opts.summary, outcome: opts.outcome,
+          metricType: opts.metricType ?? null,
+          // Explicit UTC stamp ("YYYY-MM-DD HH:MM:SS") — matches the format the
+          // scorecard's range scan compares against.
+          occurredAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        } as any)
         .returning().get();
       const patch: Partial<InsertAccount> = {};
       if (opts.touch) patch.lastContactedAt = opts.today;
@@ -408,6 +435,32 @@ export const storage = {
       return { activity, account: account! };
     });
     return run();
+  },
+
+  // ---------- Settings (key/value) ----------
+  getSetting(key: string): string | null {
+    const row = sqlite.prepare("SELECT value FROM settings WHERE key = ?").get(key) as { value: string } | undefined;
+    return row?.value ?? null;
+  },
+  setSetting(key: string, value: string): void {
+    sqlite.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, value);
+  },
+
+  /**
+   * Counts logged metric occurrences per metric key within [startIso, endIso).
+   * Bounds are computed by the caller in the user's local timezone, then passed
+   * as ISO strings; occurred_at is compared lexicographically (ISO-8601 sorts
+   * chronologically). Returns { metricKey: count }.
+   */
+  metricTally(startIso: string, endIso: string): Record<string, number> {
+    const rows = sqlite.prepare(
+      `SELECT metric_type AS k, COUNT(*) AS n FROM activities
+       WHERE metric_type IS NOT NULL AND occurred_at >= ? AND occurred_at < ?
+       GROUP BY metric_type`
+    ).all(startIso, endIso) as { k: string; n: number }[];
+    const out: Record<string, number> = {};
+    for (const r of rows) out[r.k] = r.n;
+    return out;
   },
   listAllActivities(): Activity[] {
     return db.select().from(activities).orderBy(desc(activities.id)).all();

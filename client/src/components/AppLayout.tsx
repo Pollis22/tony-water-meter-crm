@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
-import { LayoutDashboard, CalendarDays, Building2, Users, Briefcase, Map, CheckSquare, StickyNote, BarChart3, Settings, Search } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Building2, Users, Briefcase, Map, CheckSquare, StickyNote, BarChart3, Settings, Search, MoreHorizontal } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { useQuery } from '@tanstack/react-query';
@@ -134,7 +135,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950">
       {/* Sidebar — white chrome with the blue logo, matching ejprescott.com */}
-      <aside className="w-60 shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col no-print">
+      <aside className="hidden md:flex w-60 shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col no-print">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
           <img src={BRAND.logo} alt="Team EJP" className="h-9 w-auto dark:hidden" />
           <img src={BRAND.logoWhite} alt="Team EJP" className="h-9 w-auto hidden dark:block" />
@@ -168,15 +169,73 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center px-6 gap-4 no-print">
+        <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center px-3 md:px-6 gap-3 md:gap-4 no-print">
+          <span className="md:hidden flex items-center shrink-0">
+            <img src={BRAND.logo} alt="Team EJP" className="h-7 w-auto dark:hidden" />
+            <img src={BRAND.logoWhite} alt="Team EJP" className="h-7 w-auto hidden dark:block" />
+          </span>
           <GlobalSearch />
           <div className="ml-auto text-sm text-muted-foreground">
             {BRAND.region}
           </div>
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto pb-24 md:pb-0">
           {children}
         </main>
+
+        {/* Mobile bottom tab bar (iPhone/iPad portrait) */}
+        <nav
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 no-print"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          data-testid="mobile-bottom-nav"
+        >
+          <div className="grid grid-cols-5">
+            {NAV.filter((n) => ['/', '/week', '/accounts', '/route-planner'].includes(n.href)).map((item) => {
+              const Icon = item.icon;
+              const active = loc === item.href || (item.href !== '/' && loc.startsWith(item.href));
+              return (
+                <Link key={item.href} href={item.href}>
+                  <div
+                    className="flex flex-col items-center justify-center gap-0.5 py-2 cursor-pointer"
+                    style={active ? { color: BRAND.blue } : undefined}
+                    data-testid={`mnav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <Icon className={cn('w-5 h-5', !active && 'text-slate-500 dark:text-slate-400')} />
+                    <span className={cn('text-[10px] leading-none', active ? 'font-semibold' : 'text-slate-500 dark:text-slate-400')}>
+                      {item.label === 'Route Planner' ? 'Route' : item.label}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="flex flex-col items-center justify-center gap-0.5 py-2 text-slate-500 dark:text-slate-400" data-testid="mnav-more">
+                  <MoreHorizontal className="w-5 h-5" />
+                  <span className="text-[10px] leading-none">More</span>
+                </button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="rounded-t-xl">
+                <SheetHeader>
+                  <SheetTitle className="text-left text-sm">{BRAND.company} · {BRAND.appName}</SheetTitle>
+                </SheetHeader>
+                <div className="grid grid-cols-3 gap-2 py-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
+                  {NAV.filter((n) => !['/', '/week', '/accounts', '/route-planner'].includes(n.href)).map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link key={item.href} href={item.href}>
+                        <div className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                          <Icon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                          <span className="text-xs">{item.label}</span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </nav>
       </div>
     </div>
   );

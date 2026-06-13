@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import type { Account } from '@shared/schema';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { addDaysStr, todayStr } from '@/lib/field';
+import { METRICS, OUTCOME_DEFAULT_METRIC, type MetricKey } from '@shared/metrics';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, PhoneCall, Save } from 'lucide-react';
 
@@ -106,13 +108,19 @@ export function QuickLogDialog({
   const [note, setNote] = useState('');
   const [fu, setFu] = useState('7');
   const [customDate, setCustomDate] = useState('');
+  // 'auto' tracks the outcome chip's default metric; any explicit pick sticks.
+  const [metricChoice, setMetricChoice] = useState<'auto' | MetricKey | 'none'>('auto');
 
-  const reset = () => { setOutcomeKey('spoke'); setNote(''); setFu('7'); setCustomDate(''); };
+  const reset = () => { setOutcomeKey('spoke'); setNote(''); setFu('7'); setCustomDate(''); setMetricChoice('auto'); };
+  const effectiveMetric: MetricKey | null =
+    metricChoice === 'auto' ? (OUTCOME_DEFAULT_METRIC[outcomeKey] ?? null)
+    : metricChoice === 'none' ? null
+    : metricChoice;
 
   const mut = useMutation({
     mutationFn: async () => {
       const o = OUTCOMES.find((x) => x.key === outcomeKey)!;
-      const body: Record<string, unknown> = { type: o.type, outcome: o.outcome, note: note.trim() || undefined };
+      const body: Record<string, unknown> = { type: o.type, outcome: o.outcome, note: note.trim() || undefined, metricType: effectiveMetric };
       if (fu === 'custom') { if (customDate) body.nextFollowUpAt = customDate; }
       else if (fu !== 'nochange') body.nextFollowUpAt = addDaysStr(todayStr(), Number(fu));
       return (await apiRequest('POST', `/api/accounts/${account.id}/log`, body)).json();
@@ -120,6 +128,7 @@ export function QuickLogDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/accounts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/activities', account.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/scorecard'] });
       toast({ title: `Logged — ${account.name}` });
       setOpen(false);
       reset();
@@ -156,6 +165,24 @@ export function QuickLogDialog({
               {o.label}
             </Button>
           ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="text-xs font-medium text-muted-foreground shrink-0">Counts toward</div>
+          <Select value={metricChoice} onValueChange={(v) => setMetricChoice(v as 'auto' | MetricKey | 'none')}>
+            <SelectTrigger className="h-9 flex-1" data-testid="select-quicklog-metric">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">
+                Auto — {METRICS.find((m) => m.key === (OUTCOME_DEFAULT_METRIC[outcomeKey] ?? ''))?.label ?? 'not counted'}
+              </SelectItem>
+              {METRICS.map((m) => (
+                <SelectItem key={m.key} value={m.key}>{m.pick}</SelectItem>
+              ))}
+              <SelectItem value="none">Don't count this</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-start gap-2">

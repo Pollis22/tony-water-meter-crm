@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -45,7 +46,7 @@ export const accounts = sqliteTable("accounts", {
   lat: real("lat"),
   lng: real("lng"),
   geoSource: text("geo_source"),
-  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true, createdAt: true });
@@ -61,7 +62,7 @@ export const contacts = sqliteTable("contacts", {
   phone: text("phone"),
   email: text("email"),
   notes: text("notes"),
-  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 export const insertContactSchema = createInsertSchema(contacts).omit({ id: true, createdAt: true });
 export type InsertContact = z.infer<typeof insertContactSchema>;
@@ -76,7 +77,7 @@ export const tasks = sqliteTable("tasks", {
   dueDate: text("due_date"),
   status: text("status").notNull().default("Open"), // Open | Done
   priority: text("priority").notNull().default("Medium"),
-  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, createdAt: true });
 export type InsertTask = z.infer<typeof insertTaskSchema>;
@@ -87,7 +88,7 @@ export const notes = sqliteTable("notes", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   accountId: integer("account_id").notNull(),
   body: text("body").notNull(),
-  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 export const insertNoteSchema = createInsertSchema(notes).omit({ id: true, createdAt: true });
 export type InsertNote = z.infer<typeof insertNoteSchema>;
@@ -100,7 +101,8 @@ export const activities = sqliteTable("activities", {
   type: text("type").notNull(), // call | email | meeting | visit | status_change | note
   summary: text("summary").notNull(),
   outcome: text("outcome"),
-  occurredAt: text("occurred_at").notNull().default("CURRENT_TIMESTAMP"),
+  metricType: text("metric_type"), // scorecard metric key, or null
+  occurredAt: text("occurred_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 export const insertActivitySchema = createInsertSchema(activities).omit({ id: true, occurredAt: true });
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
@@ -115,7 +117,7 @@ export const opportunities = sqliteTable("opportunities", {
   amount: real("amount"),
   closeDate: text("close_date"),
   notes: text("notes"),
-  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 export const insertOpportunitySchema = createInsertSchema(opportunities).omit({ id: true, createdAt: true });
 export type InsertOpportunity = z.infer<typeof insertOpportunitySchema>;
@@ -135,7 +137,7 @@ export const routes = sqliteTable("routes", {
   orderedIds: text("ordered_ids"), // JSON array of ints (optimized order)
   totalDistanceKm: real("total_distance_km"),
   totalDurationSec: real("total_duration_sec"),
-  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 export const insertRouteSchema = createInsertSchema(routes).omit({ id: true, createdAt: true });
 export type InsertRoute = z.infer<typeof insertRouteSchema>;

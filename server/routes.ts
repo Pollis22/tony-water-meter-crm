@@ -10,6 +10,7 @@ import nodeFs from "node:fs";
 import { storage } from "./storage";
 import { parseContactFiles, MAX_IMPORT_ROWS } from "./importContacts";
 import { parseAccountFiles } from "./importAccounts";
+import { METRICS, METRIC_KEYS, DEFAULT_DAILY_TARGETS, PERIOD_MULTIPLIER } from "@shared/metrics";
 import {
   insertAccountSchema, insertContactSchema, insertTaskSchema,
   insertNoteSchema, insertActivitySchema, insertOpportunitySchema, insertRouteSchema,
@@ -238,6 +239,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     type: z.enum(["call", "email", "meeting", "visit", "note"]),
     outcome: z.string().trim().max(120).optional(),
     note: z.string().trim().max(4000).optional(),
+    metricType: z.enum(METRIC_KEYS as [string, ...string[]]).nullable().optional(),
     // null clears the follow-up; omitted leaves it untouched
     nextFollowUpAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   });
@@ -260,6 +262,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         type: b.type,
         summary: summary.slice(0, 4000),
         outcome: b.outcome ?? null,
+        metricType: b.metricType ?? null,
         nextFollowUpAt: "nextFollowUpAt" in req.body ? b.nextFollowUpAt : undefined,
         touch: b.type !== "note", // plain notes don't count as contacting the account
         today: localDay(),
@@ -269,6 +272,50 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       console.error("[log]", e);
       res.status(500).json({ error: "Could not save the log entry." });
     }
+  });
+
+  // ---------- Scorecard ----------
+  const TARGETS_KEY = "scorecard_daily_targets";
+  const getDailyTargets = (): Record<string, number> => {
+    const raw = storage.getSetting(TARGETS_KEY);
+    if (raw) {
+      try { return { ...DEFAULT_DAILY_TARGETS, ...JSON.parse(raw) }; } catch { /* fall through */ }
+    }
+    return { ...DEFAULT_DAILY_TARGETS };
+  };
+
+  // Tally counts for a period. The client passes start/end as ISO instants it
+  // computed in the user's local timezone (so "today" means Tony's day).
+  app.get("/api/scorecard", (req, res) => {
+    const start = String(req.query.start ?? "");
+    const end = String(req.query.end ?? "");
+    const period = String(req.query.period ?? "day");
+    if (!start || !end) return res.status(400).json({ error: "start and end are required (ISO instants)." });
+    const counts = storage.metricTally(start, end);
+    const daily = getDailyTargets();
+    const mult = (PERIOD_MULTIPLIER as Record<string, number>)[period] ?? 1;
+    const metrics = METRICS.map((m) => ({
+      key: m.key,
+      label: m.label,
+      actual: counts[m.key] ?? 0,
+      target: Math.round((daily[m.key] ?? m.target) * mult),
+    }));
+    res.json({ period, metrics });
+  });
+
+  app.get("/api/scorecard/targets", (_req, res) => {
+    res.json({ daily: getDailyTargets() });
+  });
+
+  const targetsSchema = z.object({
+    daily: z.record(z.enum(METRIC_KEYS as [string, ...string[]]), z.number().int().min(0).max(100)),
+  });
+  app.put("/api/scorecard/targets", (req, res) => {
+    const parsed = targetsSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const merged = { ...getDailyTargets(), ...parsed.data.daily };
+    storage.setSetting(TARGETS_KEY, JSON.stringify(merged));
+    res.json({ daily: merged });
   });
 
   app.get("/api/search", (req, res) => {

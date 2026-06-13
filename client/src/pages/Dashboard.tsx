@@ -6,6 +6,7 @@ import { Link } from 'wouter';
 import { fmtNum, tierColor, statusColor, scoreColor } from '@/lib/format';
 import { Building2, MapPin, Target, TrendingUp, Calendar, Layers } from 'lucide-react';
 import { FollowUpQueue } from '@/components/FollowUpQueue';
+import { MetricsScorecard } from '@/components/MetricsScorecard';
 
 interface Summary {
   total: number;
@@ -64,7 +65,8 @@ export default function Dashboard() {
         <StatCard label="Counties" value={Object.keys(s.byCounty).length} sub="across territory" icon={MapPin} />
       </div>
 
-      <div className="mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <MetricsScorecard />
         <FollowUpQueue limit={6} />
       </div>
 

@@ -1,10 +1,64 @@
 import { useRef, useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { METRICS } from '@shared/metrics';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Droplets, DatabaseBackup, FileSpreadsheet, UploadCloud, AlertTriangle } from 'lucide-react';
+import { Droplets, DatabaseBackup, FileSpreadsheet, UploadCloud, AlertTriangle, Target } from 'lucide-react';
 
+
+function TargetsBlock() {
+  const { toast } = useToast();
+  const { data } = useQuery<{ daily: Record<string, number> }>({
+    queryKey: ['/api/scorecard/targets'],
+    queryFn: async () => (await fetch('/api/scorecard/targets')).json(),
+  });
+  const [draft, setDraft] = useState<Record<string, number> | null>(null);
+  const vals: Record<string, number> =
+    draft ?? data?.daily ?? Object.fromEntries(METRICS.map((m) => [m.key, m.target]));
+
+  const save = useMutation({
+    mutationFn: async () => (await apiRequest('PUT', '/api/scorecard/targets', { daily: vals })).json(),
+    onSuccess: () => {
+      toast({ title: 'Daily targets saved' });
+      queryClient.invalidateQueries({ queryKey: ['/api/scorecard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/scorecard/targets'] });
+      setDraft(null);
+    },
+    onError: () => toast({ title: 'Could not save targets', variant: 'destructive' }),
+  });
+
+  return (
+    <Card>
+      <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Target className="w-4 h-4 text-blue-600" /> Scorecard Targets</CardTitle></CardHeader>
+      <CardContent className="text-sm space-y-3">
+        <p className="text-xs text-muted-foreground">
+          Targets are per workday. Week, month, and year on the Dashboard scorecard scale automatically (×5, ×21, ×250 workdays).
+        </p>
+        <div className="space-y-2">
+          {METRICS.map((m) => (
+            <div key={m.key} className="flex items-center justify-between gap-3">
+              <span className="text-sm">{m.label}</span>
+              <Input
+                type="number" min={0} max={100}
+                className="h-9 w-20 text-right"
+                value={vals[m.key] ?? 0}
+                onChange={(e) => setDraft({ ...vals, [m.key]: Math.max(0, Number(e.target.value) || 0) })}
+                data-testid={`input-target-${m.key}`}
+              />
+            </div>
+          ))}
+        </div>
+        <Button size="sm" onClick={() => save.mutate()} disabled={!draft || save.isPending} data-testid="button-save-targets">
+          {save.isPending ? 'Saving…' : 'Save targets'}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
 
 function RestoreBlock() {
   const { toast } = useToast();
@@ -142,6 +196,8 @@ export default function Settings() {
             </ul>
           </CardContent>
         </Card>
+
+        <TargetsBlock />
 
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><DatabaseBackup className="w-4 h-4 text-blue-600" /> Backup</CardTitle></CardHeader>
