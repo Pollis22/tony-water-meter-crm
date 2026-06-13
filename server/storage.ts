@@ -13,6 +13,7 @@ import Database from "better-sqlite3";
 import { eq, desc, asc } from "drizzle-orm";
 import fs from 'node:fs';
 import path from 'node:path';
+import { computeScore, SCORING_FIELDS, type ScoreInputs } from './scoring';
 
 // Resolve the database location. Railway (or any host with a persistent
 // volume) sets DB_PATH, e.g. /data/data.db; locally we fall back to ./data.db.
@@ -188,6 +189,25 @@ function maybeSeed() {
 }
 maybeSeed();
 
+// One-time catch-up: score any account that predates auto-scoring (manually
+// added rows sit at 0 until something touches them). Runs at boot; no-ops
+// once everything is scored.
+function rescoreUnscored() {
+  const unscored = db.select().from(accounts).all().filter((a) => !a.candidateScore);
+  if (!unscored.length) return;
+  const run = sqlite.transaction(() => {
+    for (const a of unscored) {
+      const { score, reasons } = computeScore(a as ScoreInputs);
+      db.update(accounts)
+        .set({ candidateScore: score, scoreReasons: JSON.stringify(reasons) } as any)
+        .where(eq(accounts.id, a.id)).run();
+    }
+  });
+  run();
+  console.log(`[scoring] scored ${unscored.length} previously unscored account(s)`);
+}
+rescoreUnscored();
+
 // ---------- Apply public-budget research (idempotent; only fills empty cells) ----------
 function applyBudgets() {
   const candidates = [
@@ -230,7 +250,13 @@ export const storage = {
     return db.select().from(accounts).where(eq(accounts.id, id)).get();
   },
   createAccount(data: InsertAccount): Account {
-    return db.insert(accounts).values(data as any).returning().get();
+    const values: any = { ...data };
+    if (values.candidateScore == null || values.candidateScore === 0) {
+      const { score, reasons } = computeScore(values as ScoreInputs);
+      values.candidateScore = score;
+      values.scoreReasons = JSON.stringify(reasons);
+    }
+    return db.insert(accounts).values(values).returning().get();
   },
   /**
    * Bulk account import. `creates` are inserted; `updates` patch existing rows
@@ -238,14 +264,43 @@ export const storage = {
    */
   bulkUpsertAccounts(creates: InsertAccount[], updates: { id: number; data: Partial<InsertAccount> }[]): { created: number; updated: number } {
     const run = sqlite.transaction(() => {
-      for (const c of creates) db.insert(accounts).values(c as any).run();
-      for (const u of updates) db.update(accounts).set(u.data as any).where(eq(accounts.id, u.id)).run();
+      for (const c of creates) {
+        const values: any = { ...c };
+        if (values.candidateScore == null || values.candidateScore === 0) {
+          const { score, reasons } = computeScore(values as ScoreInputs);
+          values.candidateScore = score;
+          values.scoreReasons = JSON.stringify(reasons);
+        }
+        db.insert(accounts).values(values).run();
+      }
+      for (const u of updates) {
+        const patch: any = { ...u.data };
+        if (patch.candidateScore == null && SCORING_FIELDS.some((f) => f in patch)) {
+          const current = db.select().from(accounts).where(eq(accounts.id, u.id)).get();
+          if (current) {
+            const { score, reasons } = computeScore({ ...current, ...patch } as ScoreInputs);
+            patch.candidateScore = score;
+            patch.scoreReasons = JSON.stringify(reasons);
+          }
+        }
+        db.update(accounts).set(patch).where(eq(accounts.id, u.id)).run();
+      }
       return { created: creates.length, updated: updates.length };
     });
     return run();
   },
   updateAccount(id: number, data: Partial<InsertAccount>): Account | undefined {
-    db.update(accounts).set(data as any).where(eq(accounts.id, id)).run();
+    const patch: any = { ...data };
+    const touchesScoring = SCORING_FIELDS.some((f) => f in patch);
+    if (touchesScoring && patch.candidateScore == null) {
+      const current = this.getAccount(id);
+      if (current) {
+        const { score, reasons } = computeScore({ ...current, ...patch } as ScoreInputs);
+        patch.candidateScore = score;
+        patch.scoreReasons = JSON.stringify(reasons);
+      }
+    }
+    db.update(accounts).set(patch).where(eq(accounts.id, id)).run();
     return this.getAccount(id);
   },
   deleteAccount(id: number) {
