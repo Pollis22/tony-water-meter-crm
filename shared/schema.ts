@@ -35,6 +35,7 @@ export const accounts = sqliteTable("accounts", {
   lastContactedAt: text("last_contacted_at"),
   nextFollowUpAt: text("next_follow_up_at"),
   notes: text("notes"),
+  pinned: integer("pinned").notNull().default(0), // My Top 5 focus list (manual, 1 = pinned)
   tags: text("tags"), // JSON array
   // Public budget research
   waterBudgetUsd: integer("water_budget_usd"), // annual water/utility budget in USD; null = unknown

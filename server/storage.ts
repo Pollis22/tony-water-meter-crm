@@ -146,6 +146,7 @@ safeAddColumn('accounts', 'water_budget_fiscal_year', 'TEXT');
 safeAddColumn('accounts', 'water_budget_type', 'TEXT');
 safeAddColumn('accounts', 'water_budget_source', 'TEXT');
 safeAddColumn('accounts', 'water_budget_notes', 'TEXT');
+safeAddColumn('accounts', 'pinned', 'INTEGER NOT NULL DEFAULT 0');
 safeAddColumn('activities', 'metric_type', 'TEXT');
 
 // Repair rows where a drizzle string-literal default wrote 'CURRENT_TIMESTAMP'
@@ -309,6 +310,18 @@ export const storage = {
     });
     return run();
   },
+  // ---------- My Top 5 (manual pin) ----------
+  countPinned(): number {
+    return (sqlite.prepare("SELECT COUNT(*) AS c FROM accounts WHERE pinned = 1").get() as { c: number }).c;
+  },
+  setPinned(id: number, pinned: boolean): Account | undefined {
+    db.update(accounts).set({ pinned: pinned ? 1 : 0 } as any).where(eq(accounts.id, id)).run();
+    return this.getAccount(id);
+  },
+  listPinned(): Account[] {
+    return db.select().from(accounts).where(eq(accounts.pinned, 1)).orderBy(desc(accounts.candidateScore)).all();
+  },
+
   updateAccount(id: number, data: Partial<InsertAccount>): Account | undefined {
     const patch: any = { ...data };
     const touchesScoring = SCORING_FIELDS.some((f) => f in patch);

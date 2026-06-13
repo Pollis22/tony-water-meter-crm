@@ -32,7 +32,26 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(storage.createAccount(parsed.data));
   });
   app.patch("/api/accounts/:id", (req, res) => {
-    const a = storage.updateAccount(Number(req.params.id), req.body);
+    const parsed = insertAccountSchema.partial().strict().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const a = storage.updateAccount(Number(req.params.id), parsed.data);
+    if (!a) return res.status(404).json({ error: "Not found" });
+    res.json(a);
+  });
+
+  // My Top 5 — Tony's manual focus list. Pinning is capped at 5; the cap is
+  // enforced server-side so it holds no matter where the request comes from.
+  const MAX_PINNED = 5;
+  app.post("/api/accounts/:id/pin", (req, res) => {
+    const id = Number(req.params.id);
+    const pinned = Boolean(req.body?.pinned);
+    if (pinned && storage.countPinned() >= MAX_PINNED) {
+      const current = storage.getAccount(id);
+      if (!current?.pinned) {
+        return res.status(409).json({ error: `Top 5 is full — unpin one first.`, max: MAX_PINNED });
+      }
+    }
+    const a = storage.setPinned(id, pinned);
     if (!a) return res.status(404).json({ error: "Not found" });
     res.json(a);
   });

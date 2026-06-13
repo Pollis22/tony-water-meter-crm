@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { fmtNum, tierColor, priorityColor, statusColor, scoreColor, STATUSES, PRIORITIES, TIERS } from '@/lib/format';
-import { ArrowLeft, Mail, Phone, MapPin, Building2, Sparkles, Plus, Trash2, Check, DollarSign, ExternalLink, FileText } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Sparkles, Plus, Trash2, Check, DollarSign, ExternalLink, FileText, Star } from 'lucide-react';
 import { QuickLogDialog, VoiceNoteCard } from '@/components/FieldLog';
+import { BRAND } from '@/lib/brand';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AccountDetail() {
@@ -73,6 +74,16 @@ export default function AccountDetail() {
       ? `$${(usd / 1_000_000).toFixed(2)}M ($${usd.toLocaleString()})`
       : `$${usd.toLocaleString()}`;
 
+  const pinMut = useMutation({
+    mutationFn: async (pinned: boolean) => {
+      const r = await apiRequest('POST', `/api/accounts/${account!.id}/pin`, { pinned });
+      if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b?.error || 'Could not update Top 5'); }
+      return r.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/accounts'] }),
+    onError: (e: any) => toast({ title: e?.message || 'Top 5 is full — unpin one first.', variant: 'destructive' }),
+  });
+
   return (
     <div className="p-6 max-w-[1400px] mx-auto">
       <Link href="/accounts">
@@ -86,6 +97,16 @@ export default function AccountDetail() {
         <div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl font-semibold" data-testid="text-account-name">{account.name}</h1>
+            <Button
+              variant="ghost" size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => pinMut.mutate(!account.pinned)}
+              disabled={pinMut.isPending}
+              title={account.pinned ? 'In My Top 5 — tap to remove' : 'Add to My Top 5'}
+              data-testid="button-pin-account"
+            >
+              <Star className="w-5 h-5" style={account.pinned ? { color: BRAND.blue } : undefined} fill={account.pinned ? BRAND.blue : 'none'} />
+            </Button>
             <Badge variant="outline" className={priorityColor[account.priority]}>{account.priority} Priority</Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
