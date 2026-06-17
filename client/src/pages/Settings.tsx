@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { ImportTrackerDialog } from '@/components/ImportTrackerDialog';
 import { Badge } from '@/components/ui/badge';
-import { Droplets, DatabaseBackup, FileSpreadsheet, UploadCloud, AlertTriangle, Target } from 'lucide-react';
+import { Droplets, DatabaseBackup, FileSpreadsheet, UploadCloud, AlertTriangle, Target, CalendarClock } from 'lucide-react';
 
 
 function TargetsBlock() {
@@ -198,6 +199,16 @@ export default function Settings() {
         </Card>
 
         <TargetsBlock />
+
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><CalendarClock className="w-4 h-4 text-blue-600" /> Import weekly tracker</CardTitle></CardHeader>
+          <CardContent className="text-sm space-y-3">
+            <p className="text-muted-foreground">
+              Upload a Weekly Accountability Tracker (.xlsx). Each Account Activity Log row is matched to an existing account and logged as a backdated, metric-tagged touch, so past weeks show up on the scorecard. Unmatched names are skipped — no new accounts are created.
+            </p>
+            <ImportTrackerDialog />
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><DatabaseBackup className="w-4 h-4 text-blue-600" /> Backup</CardTitle></CardHeader>

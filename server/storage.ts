@@ -310,6 +310,32 @@ export const storage = {
     });
     return run();
   },
+  // ---------- Backdated activity seeding (weekly tracker import) ----------
+  /** Inserts activities with explicit occurred_at timestamps, in one transaction. */
+  insertActivitiesBackdated(entries: {
+    accountId: number; type: string; summary: string; outcome: string | null;
+    metricType: string | null; occurredAt: string;
+  }[]): number {
+    const run = sqlite.transaction(() => {
+      for (const e of entries) {
+        db.insert(activities).values({
+          accountId: e.accountId, type: e.type, summary: e.summary,
+          outcome: e.outcome, metricType: e.metricType, occurredAt: e.occurredAt,
+        } as any).run();
+      }
+      return entries.length;
+    });
+    return run();
+  },
+  /** Sets lastContactedAt only if the given date is newer than what's stored. */
+  setLastContactedIfNewer(accountId: number, dateStr: string): void {
+    const cur = this.getAccount(accountId);
+    if (!cur) return;
+    if (!cur.lastContactedAt || dateStr > cur.lastContactedAt) {
+      db.update(accounts).set({ lastContactedAt: dateStr } as any).where(eq(accounts.id, accountId)).run();
+    }
+  },
+
   // ---------- My Top 5 (manual pin) ----------
   countPinned(): number {
     return (sqlite.prepare("SELECT COUNT(*) AS c FROM accounts WHERE pinned = 1").get() as { c: number }).c;

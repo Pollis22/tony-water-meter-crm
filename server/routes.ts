@@ -10,7 +10,9 @@ import nodeFs from "node:fs";
 import { storage } from "./storage";
 import { parseContactFiles, MAX_IMPORT_ROWS } from "./importContacts";
 import { parseAccountFiles } from "./importAccounts";
+import { parseTracker } from "./importTracker";
 import { METRICS, METRIC_KEYS, DEFAULT_DAILY_TARGETS, PERIOD_MULTIPLIER } from "@shared/metrics";
+import type { Account } from "@shared/schema";
 import {
   insertAccountSchema, insertContactSchema, insertTaskSchema,
   insertNoteSchema, insertActivitySchema, insertOpportunitySchema, insertRouteSchema,
@@ -416,6 +418,86 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // bad state regardless; the error path before close() is the common one.
       res.status(400).json({ error: String(e?.message ?? "Restore failed — the database was not changed.") });
     }
+  });
+
+  // ---------- Weekly tracker import (backdated activity history) ----------
+  const trackerUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024, files: 1 } });
+
+  app.post("/api/import/tracker/parse", (req: Request, res: Response, next: NextFunction) => {
+    trackerUpload.single("file")(req, res, (err: any) => {
+      if (err) return res.status(400).json({ error: err.code === "LIMIT_FILE_SIZE" ? "File must be 15 MB or smaller." : "Could not read the upload." });
+      next();
+    });
+  }, (req, res) => {
+    const f = (req as any).file as Express.Multer.File | undefined;
+    if (!f) return res.status(400).json({ error: "No file uploaded." });
+    try {
+      const result = parseTracker(f.buffer, storage.listAccounts());
+      res.json(result);
+    } catch (e: any) {
+      console.error("[tracker parse]", e);
+      res.status(400).json({ error: String(e?.message ?? "Could not parse the tracker.") });
+    }
+  });
+
+  const trackerCommitSchema = z.object({
+    rows: z.array(z.object({
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      account: z.string().min(1),
+      existingId: z.number().int().nullable().optional(),
+      contact: z.string().nullable().optional(),
+      type: z.enum(["visit", "call", "email", "meeting", "note"]),
+      metricType: z.string().nullable().optional(),
+      summary: z.string().min(1),
+    })).min(1).max(2000),
+  });
+
+  app.post("/api/import/tracker/commit", (req, res) => {
+    const parsed = trackerCommitSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+    const looseKey = (s: string) =>
+      s.trim().toLowerCase().replace(/^city of\s+/, "").replace(/^village of\s+/, "").replace(/\./g, "").replace(/\s+/g, " ").trim();
+
+    // Resolve each row to an account id, creating accounts as needed (once each).
+    const accountsByKey = new Map<string, Account>();
+    for (const a of storage.listAccounts()) accountsByKey.set(looseKey(a.city || a.name), a);
+
+    let matched = 0;
+    const unmatched = new Set<string>();
+
+    // Match only — tracker import never creates accounts. Unmatched rows are
+    // reported back and contribute nothing.
+    const idForRow = (account: string, existingId: number | null | undefined): number | null => {
+      if (existingId) { const a = storage.getAccount(existingId); if (a) { matched++; return a.id; } }
+      const hit = accountsByKey.get(looseKey(account));
+      if (hit) { matched++; return hit.id; }
+      unmatched.add(account);
+      return null;
+    };
+
+    const entries: Parameters<typeof storage.insertActivitiesBackdated>[0] = [];
+    const maxDateByAccount = new Map<number, string>();
+    const metricLabels: Record<string, string> = {
+      face_to_face: "Face-to-Face Stop", real_conversation: "Real Conversation",
+      follow_up: "Follow-Up", secondary_call: "Secondary Call", meeting_set: "Meeting Set",
+    };
+
+    let skipped = 0;
+    for (const r of parsed.data.rows) {
+      const accountId = idForRow(r.account, r.existingId ?? null);
+      if (accountId == null) { skipped++; continue; }
+      const occurredAt = `${r.date} 12:00:00`; // noon UTC keeps the calendar day in Eastern time
+      const outcome = r.metricType ? (metricLabels[r.metricType] ?? null) : null;
+      entries.push({ accountId, type: r.type, summary: r.summary, outcome, metricType: r.metricType ?? null, occurredAt });
+      const prev = maxDateByAccount.get(accountId);
+      if (!prev || r.date > prev) maxDateByAccount.set(accountId, r.date);
+    }
+
+    const inserted = storage.insertActivitiesBackdated(entries);
+    for (const [accountId, date] of Array.from(maxDateByAccount)) storage.setLastContactedIfNewer(accountId, date);
+
+    res.json({ inserted, accountsMatched: matched, skipped, unmatched: Array.from(unmatched).sort() });
   });
 
   // ---------- Tasks ----------
