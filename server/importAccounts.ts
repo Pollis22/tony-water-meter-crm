@@ -69,6 +69,10 @@ function clean(v: unknown): string {
 function norm(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
 }
+/** Drop leading municipal prefixes for a clean, matchable display name ("City of Holland" -> "Holland"). Township/Village suffixes are kept — they distinguish real municipalities. */
+function stripMuniPrefix(s: string): string {
+  return clean(s).replace(/^(city of|village of|charter township of|township of)\s+/i, "").trim();
+}
 function stripMuni(s: string): string {
   return norm(s)
     .replace(/\b(charter township of|township of|village of|city of|charter twp|charter township|township|twp|village|city)\b/g, " ")
@@ -206,26 +210,47 @@ const HEADER_ALIASES: Record<string, Field> = {
   "population": "population", "pop": "population", "residents": "population", "service population": "population",
   "endpoints": "endpoints", "meters": "endpoints", "connections": "endpoints",
   "accounts": "endpoints", "service connections": "endpoints", "meter count": "endpoints",
+  "meter count users": "endpoints", "meter count user": "endpoints",
   "estimated endpoints": "endpoints", "est endpoints": "endpoints",
   // contact
   "contact": "primaryContact", "primary contact": "primaryContact", "contact name": "primaryContact",
   "decision maker": "primaryContact",
+  // Red Map: the Water/DPW contact is the real buyer — prefer it over city leadership.
+  "water dpw contact": "primaryContact", "dpw contact": "primaryContact", "water contact": "primaryContact",
+  "water dpw title": "contactTitle", "dpw title": "contactTitle", "water dpw": "contactTitle",
+  "water dpw phone": "phone", "dpw phone": "phone",
+  "water dpw email public contact": "email", "water dpw email public email": "email", "water dpw email": "email", "dpw email": "email", "public email": "email",
   "title": "contactTitle", "contact title": "contactTitle", "job title": "contactTitle", "position": "contactTitle", "role": "contactTitle",
   "phone": "phone", "phone number": "phone", "telephone": "phone", "tel": "phone", "office phone": "phone", "direct": "phone",
   "email": "email", "e-mail": "email", "email address": "email",
   "address": "address", "street": "address", "street address": "address", "mailing address": "address", "location": "address",
+  "primary address": "address",
   // money / notes
   "water budget": "waterBudgetUsd", "budget": "waterBudgetUsd", "annual budget": "waterBudgetUsd",
   "water budget usd": "waterBudgetUsd", "utility budget": "waterBudgetUsd",
   "insight": "insight", "notes": "insight", "note": "insight", "comments": "insight", "description": "insight", "summary": "insight",
+  "current notes": "insight",
 };
 
 function detectHeaderMap(row: string[]): Map<number, Field> | null {
   const map = new Map<number, Field>();
+  // Headers whose key names a specific buyer-facing field (DPW/water) should
+  // win over a generic one earlier in the row (e.g. the city-leadership email
+  // in column E shouldn't claim "email" before the DPW email in column I).
+  const PREFERRED = new Set(["water dpw contact", "dpw contact", "water contact",
+    "water dpw title", "dpw title", "water dpw phone", "dpw phone",
+    "water dpw email public", "water dpw email", "dpw email"]);
+  const claimedBy = new Map<Field, { i: number; preferred: boolean }>();
   row.forEach((cell, i) => {
     const key = norm(cell);
-    if (key && HEADER_ALIASES[key] && !Array.from(map.values()).includes(HEADER_ALIASES[key])) {
-      map.set(i, HEADER_ALIASES[key]);
+    const field = key ? HEADER_ALIASES[key] : undefined;
+    if (!field) return;
+    const isPref = PREFERRED.has(key);
+    const prior = claimedBy.get(field);
+    if (!prior || (isPref && !prior.preferred)) {
+      if (prior) map.delete(prior.i);
+      map.set(i, field);
+      claimedBy.set(field, { i, preferred: isPref });
     }
   });
   const fields = new Set(map.values());
@@ -290,9 +315,9 @@ function rowsToAccounts(rows: string[][], map: Map<number, Field>, sourceFile: s
   const out: RawAccount[] = [];
   for (const r of rows) {
     const rec = emptyRaw(sourceFile);
-    rec.name = get(r, "name");
+    rec.name = stripMuniPrefix(get(r, "name"));
     rec.county = get(r, "county") || null;
-    rec.city = get(r, "city") || null;
+    rec.city = stripMuniPrefix(get(r, "city")) || null;
     rec.state = get(r, "state") || null;
     rec.tier = normTier(get(r, "tier"));
     rec.population = parseIntLoose(get(r, "population"));
